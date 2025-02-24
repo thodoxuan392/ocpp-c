@@ -1,0 +1,42 @@
+#ifndef __OCPP_STOP_TRANSACTION_H
+#define __OCPP_STOP_TRANSACTION_H
+
+#include <OcppConfig.h>
+#include <OcppPrvHeader.h>
+
+typedef enum
+{
+	OCPP_STOP_TRANSACTION_REASON_EMG_STOP,
+	OCPP_STOP_TRANSACTION_REASON_EV_DISCONNECTED,
+	OCPP_STOP_TRANSACTION_REASON_HARD_RESET,
+	OCPP_STOP_TRANSACTION_REASON_LOCAL,
+	OCPP_STOP_TRANSACTION_REASON_OTHER,
+	OCPP_STOP_TRANSACTION_REASON_POWER_LOSS,
+	OCPP_STOP_TRANSACTION_REASON_REBOOT,
+	OCPP_STOP_TRANSACTION_REASON_REMOTE,
+	OCPP_STOP_TRANSACTION_REASON_SOFT_RESET,
+	OCPP_STOP_TRANSACTION_REASON_UNLOCK_COMMAND,
+	OCPP_STOP_TRANSACTION_REASON_DEAUTHORIZED,
+
+} OcppStopTransactionReason;
+
+typedef struct
+{
+	char idTag[OCPP_ID_TAG_MAX_LENGTH];
+	int meterStop;
+	OcppDateTime timestamp;
+	int transactionId;
+	OcppStopTransactionReason reason;
+	struct
+	{
+		OcppDateTime timestamp;
+		OcppSampledValue sampledValue[OCPP_METER_VALUE_SAMPLED_VALUE_ARRAY_MAX_LENGTH];
+	} transactionData[OCPP_TRANSACTION_DATA_ARRAY_MAX_LENGTH];
+} OcppStopTransactionRequest;
+
+typedef struct
+{
+	OcppIdTagInfo idTagInfo;
+} OcppStopTransactionResponse;
+
+#endif // __OCPP_STOP_TRANSACTION
