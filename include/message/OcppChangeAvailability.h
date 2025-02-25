@@ -6,19 +6,19 @@
 
 typedef enum
 {
-	OCPP_CHANGE_AVAILABILITY_TYPE_INOPERATIVE,
-	OCPP_CHANGE_AVAILABILITY_TYPE_OPERATIVE
-} OcppChangeAvailabilityType;
+	OCPP_AVAILABILITY_TYPE_INOPERATIVE,
+	OCPP_AVAILABILITY_TYPE_OPERATIVE
+} OcppAvailabilityType;
 
 typedef struct
 {
 	int connectorId;
-	OcppChangeAvailabilityType type;
+	OcppAvailabilityType type;
 } OcppChangeAvailabilityRequest;
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppAvailabilityStatus status;
 } OcppChangeAvailabilityResponse;
 
 #endif // __OCPP_CHANGE_AVAILABILITY_H

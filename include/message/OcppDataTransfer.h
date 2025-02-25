@@ -6,14 +6,14 @@
 
 typedef struct
 {
-	char vendorId[OCPP_VENDOR_ID_MAX_LENGTH];
-	char messageId[OCPP_DATA_TRANSFER_MESSAGE_ID_MAX_LENGTH];
+	OcppCiString255Type vendorId;
+	OcppCiString50Type messageId;
 	char data[OCPP_DATA_TRANSFER_DATA_MAX_LENGTH];
 } OcppDataTransferRequest;
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppDataTransferStatus status;
 	char data[OCPP_DATA_TRANSFER_DATA_MAX_LENGTH];
 } OcppDataTransferResponse;
 

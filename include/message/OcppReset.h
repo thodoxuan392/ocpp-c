@@ -17,7 +17,7 @@ typedef struct
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppResetStatus status;
 } OcppResetResponse;
 
 #endif // __OCPP_RESET_H

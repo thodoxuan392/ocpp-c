@@ -10,11 +10,11 @@ typedef enum
 	OCPP_DIAGNOSTIC_STATUS_UPLOADED,
 	OCPP_DIAGNOSTIC_STATUS_UPLOAD_FAILED,
 	OCPP_DIAGNOSTIC_STATUS_UPLOADING
-} OcppDiagnosticStatus;
+} OcppDiagnosticsStatus;
 
 typedef struct
 {
-	OcppDiagnosticStatus status;
+	OcppDiagnosticsStatus status;
 } OcppDiagnosticStatusNotificationRequest;
 
 typedef struct

@@ -7,12 +7,12 @@
 typedef struct
 {
 	int connectorId;
-	OcppErrorCode errorCode;
-	char info[OCPP_STATUS_NOTIFICATION_INFO_MAX_LENGTH];
+	OcppChargePointErrorCode errorCode;
+	OcppCiString50Type info;
 	OcppMessageStatus status;
 	OcppDateTime timestamp;
-	char vendorId[OCPP_VENDOR_ID_MAX_LENGTH];
-	char vendorErrorCode[OCPP_VENDOR_ERROR_CODE_MAX_LENGTH];
+	OcppCiString255Type vendorId;
+	OcppCiString50Type vendorErrorCode;
 } OcppStatusNotificationRequest;
 
 typedef struct

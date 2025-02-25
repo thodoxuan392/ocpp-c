@@ -6,8 +6,8 @@
 
 typedef struct
 {
-	char key[OCPP_CONFIGURATION_KEY_MAX_LENGTH];
-	char value[OCPP_CONFIGURATION_VALUE_MAX_LENGTH];
+	OcppCiString50Type key;
+	OcppCiString500Type value;
 } OcppChangeConfigurationRequest;
 
 typedef struct

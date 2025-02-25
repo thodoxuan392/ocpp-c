@@ -7,7 +7,7 @@
 typedef struct
 {
 	int connectorId;
-	char idTag[OCPP_ID_TAG_MAX_LENGTH];
+	OcppIdToken idTag;
 	int meterStart;
 	int reservationId;
 	OcppDateTime timestamp;

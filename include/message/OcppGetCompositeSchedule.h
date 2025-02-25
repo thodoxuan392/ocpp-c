@@ -8,15 +8,15 @@ typedef struct
 {
 	int connectorId;
 	int duration;
-	OcppChargingRateUnit chargingRateUnit;
+	OcppChargingRateUnitType chargingRateUnit;
 } OcppGetCompositeScheduleRequest;
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppGetCompositeScheduleStatus status;
 	int connectorId;
 	OcppDateTime scheduleStart;
-	OcppChargeSchedule chargingSchedule;
+	OcppChargingSchedule chargingSchedule;
 } OcppGetCompositeScheduleResponse;
 
 #endif // __OCPP_GET_COMPOSITE_SCHEDULE_H

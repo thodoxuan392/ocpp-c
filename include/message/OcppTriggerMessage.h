@@ -12,16 +12,16 @@ typedef enum
 	OCPP_TRIGGER_MESSAGE_HEARTBEAT,
 	OCPP_TRIGGER_MESSAGE_METER_VALUE,
 	OCPP_TRIGGER_MESSAGE_STATUS_NOTIFICATION
-} OcppTriggerMessageRequested;
+} OcppMessageTrigger;
 
 typedef struct
 {
-	OcppTriggerMessageRequested requestedMessage;
+	OcppMessageTrigger requestedMessage;
 } OcppTriggerMessageRequest;
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppTriggerMessageStatus status;
 } OcppTriggerMessageResponse;
 
 #endif // __OCPP_TRIGGER_MESSAGE_H

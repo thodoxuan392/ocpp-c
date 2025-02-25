@@ -15,7 +15,7 @@ typedef struct
 
 typedef struct
 {
-	char filename[OCPP_FILE_NAME_MAX_LENGTH];
+	OcppCiString255Type filename;
 } OcppGetDiagnosticResponse;
 
 #endif // __OCPP_GET_DIAGNOSTIC_H

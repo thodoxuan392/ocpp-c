@@ -11,7 +11,7 @@ typedef struct
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppUnlockStatus status;
 } OcppUnlockConnectorResponse;
 
 #endif // __OCPP_UNLOCK_CONNECTOR_H

@@ -8,14 +8,14 @@ typedef struct
 {
 	int connectorId;
 	OcppDateTime expiryDate;
-	char idTag[OCPP_ID_TAG_MAX_LENGTH];
-	char parentIdTag[OCPP_ID_TAG_MAX_LENGTH];
+	OcppIdToken idTag;
+	OcppIdToken parentIdTag;
 	int reservationId;
 } OcppReserveNowRequest;
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppReservationStatus status;
 } OcppReserveNowResponse;
 
 #endif // __OCPP_RESERVE_NOW_H

@@ -11,7 +11,7 @@ typedef struct
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppCancelReservationStatus status;
 } OcppCancelReservationResponse;
 
 #endif // __OCPP_CANCEL_RESERVATION_H

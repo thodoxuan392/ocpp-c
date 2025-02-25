@@ -10,7 +10,7 @@ typedef struct
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppClearCacheStatus status;
 } OcppClearCacheResponse;
 
 #endif // __OCPP_CLEAR_CACHE_H

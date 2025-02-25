@@ -11,7 +11,7 @@ typedef struct
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppRemoteStartStopStatus status;
 } OcppRemoteStopTransactionResponse;
 
 #endif // __OCPP_REMOTE_STOP_TRANSACTION_H

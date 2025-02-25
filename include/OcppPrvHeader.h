@@ -51,7 +51,7 @@ typedef enum
 {
 	OCPP_CHARGING_RATE_UNIT_A,
 	OCPP_CHARGING_RATE_UNIT_B
-} OcppChargingRateUnit;
+} OcppChargingRateUnitType;
 
 typedef enum
 {
@@ -91,7 +91,7 @@ typedef enum
 	OCPP_ERR_UNDER_VOLTAGE,
 	OCPP_ERR_OVER_VOLTAGE,
 	OCPP_ERR_WEAK_SIGNAL,
-} OcppErrorCode;
+} OcppChargePointErrorCode;
 
 typedef enum
 {
@@ -182,6 +182,17 @@ typedef enum
 
 } OcppSampledValueUnit;
 
+typedef enum
+{
+	OCPP_UPDATE_TYPE_DIFFERENTIAL,
+	OCPP_UPDATE_TYPE_FULL
+} OcppUpdateType;
+
+typedef char OcppCiString20Type[20];
+typedef char OcppCiString25Type[25];
+typedef char OcppCiString50Type[50];
+typedef char OcppCiString255Type[255];
+typedef char OcppCiString500Type[500];
 typedef struct
 {
 	uint16_t year;
@@ -193,6 +204,39 @@ typedef struct
 	uint8_t millisecond;
 	int8_t timeZone;
 } OcppDateTime;
+
+typedef OcppCiString20Type OcppIdToken;
+typedef struct
+{
+	OcppDateTime expiryDate;
+	OcppIdToken parentIdTag;
+	OcppMessageStatus status;
+} OcppIdTagInfo;
+
+typedef OcppMessageStatus OcppAvailabilityStatus;
+typedef OcppMessageStatus OcppRegistrationStatus;
+typedef OcppMessageStatus OcppCancelReservationStatus;
+typedef OcppMessageStatus OcppAvailabilityStatus;
+typedef OcppMessageStatus OcppConfigurationStatus;
+typedef OcppMessageStatus OcppClearCacheStatus;
+typedef OcppMessageStatus OcppClearChargingProfileStatus;
+typedef OcppMessageStatus OcppDataTransferStatus;
+typedef OcppMessageStatus OcppGetCompositeScheduleStatus;
+typedef OcppMessageStatus OcppRemoteStartStopStatus;
+typedef OcppMessageStatus OcppReservationStatus;
+typedef OcppMessageStatus OcppResetStatus;
+typedef OcppMessageStatus OcppUpdateStatus;
+typedef OcppMessageStatus OcppChargingProfileStatus;
+typedef OcppMessageStatus OcppTriggerMessageStatus;
+typedef OcppMessageStatus OcppUnlockStatus;
+
+typedef char OcppUuid[OCPP_UUID_LENGTH];
+
+typedef struct
+{
+	OcppIdToken idTag;
+	OcppIdTagInfo idTagInfo;
+} OcppAuthorizationData;
 
 typedef struct
 {
@@ -207,16 +251,31 @@ typedef struct
 
 typedef struct
 {
-	OcppDateTime expiryDate;
-	char parentIdTag[OCPP_ID_TAG_MAX_LENGTH];
-	OcppMessageStatus status;
-} OcppIdTagInfo;
+	OcppDateTime timestamp;
+	OcppSampledValue sampledValue[OCPP_METER_VALUE_SAMPLED_VALUE_ARRAY_MAX_LENGTH];
+} OcppMeterValue;
+
+typedef enum
+{
+	OCPP_REASON_EMG_STOP,
+	OCPP_REASON_EV_DISCONNECTED,
+	OCPP_REASON_HARD_RESET,
+	OCPP_REASON_LOCAL,
+	OCPP_REASON_OTHER,
+	OCPP_REASON_POWER_LOSS,
+	OCPP_REASON_REBOOT,
+	OCPP_REASON_REMOTE,
+	OCPP_REASON_SOFT_RESET,
+	OCPP_REASON_UNLOCK_COMMAND,
+	OCPP_REASON_DEAUTHORIZED,
+
+} OcppReason;
 
 typedef struct
 {
 	int duration;
 	OcppDateTime startSchedule;
-	OcppChargingRateUnit chargingRateUnit;
+	OcppChargingRateUnitType chargingRateUnit;
 	struct
 	{
 		int startPeriod;
@@ -224,7 +283,7 @@ typedef struct
 		int numberPhases;
 	} chargingSchedulePeriod[OCPP_CHARGE_SCHEDULE_CHARGING_SCH_PERIOD_MAX];
 	int minChargingRate;
-} OcppChargeSchedule;
+} OcppChargingSchedule;
 
 typedef struct
 {
@@ -236,7 +295,7 @@ typedef struct
 	OcppChargingProfilePurpose chargingProfilePurpose;
 	OcppChargingProfileKind chargingProfileKind;
 	OcppRecurrencyKind recurrencyKind;
-	OcppChargeSchedule chargeSchedule;
-} OcppChargeProfile;
+	OcppChargingSchedule chargeSchedule;
+} OcppChargingProfile;
 
 #endif // __OCPP_PRIVATE_HEADER_H

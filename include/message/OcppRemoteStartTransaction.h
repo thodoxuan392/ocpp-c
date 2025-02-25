@@ -7,13 +7,13 @@
 typedef struct
 {
 	int connectorId;
-	char idTag[OCPP_ID_TAG_MAX_LENGTH];
-	OcppChargeProfile chargingProfile;
+	OcppIdToken idTag;
+	OcppChargingProfile chargingProfile;
 } OcppRemoteStartTransactionRequest;
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppRemoteStartStopStatus status;
 } OcppRemoteStartTransactionResponse;
 
 #endif // __OCPP_REMOTE_START_TRANSACTION_H

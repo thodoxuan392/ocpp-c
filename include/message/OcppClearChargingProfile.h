@@ -14,7 +14,7 @@ typedef struct
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppClearChargingProfileStatus status;
 } OcppClearChargingProfileResponse;
 
 #endif // __OCPP_CLEAR_CHARGING_PROFILE_H

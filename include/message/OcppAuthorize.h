@@ -4,9 +4,10 @@
 #include <OcppConfig.h>
 #include <OcppPrvHeader.h>
 
+typedef OcppMessageStatus OcppAuthorizationStatus;
 typedef struct
 {
-	char idTag[OCPP_ID_TAG_MAX_LENGTH];
+	OcppIdToken idTag;
 } OcppAuthorizeRequest;
 
 typedef struct

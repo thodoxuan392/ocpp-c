@@ -7,11 +7,11 @@
 typedef struct
 {
 	int connectorId;
-	OcppChargeProfile csChargingProfiles;
+	OcppChargingProfile csChargingProfiles;
 } OcppSetChargingProfileRequest;
 
 typedef struct
 {
-	OcppMessageStatus status;
+	OcppChargingProfileStatus status;
 } OcppSetChargingProfileResponse;
 #endif // __OCPP_SET_CHARGING_PROFILE_H
