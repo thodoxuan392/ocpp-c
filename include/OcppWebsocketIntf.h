@@ -2,7 +2,7 @@
 #define __OCPP_WEB_SOCKET_INTF_H
 
 #include <OcppConfig.h>
-#include <OcppPrvHeader.h>
+#include <OcppTypes.h>
 
 typedef enum
 {

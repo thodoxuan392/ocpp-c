@@ -2,16 +2,7 @@
 #define ___OCPP_DIAGNOSTIC_STATUS_NOTIFICATION_H
 
 #include <OcppConfig.h>
-#include <OcppPrvHeader.h>
-
-typedef enum
-{
-	OCPP_DIAGNOSTIC_STATUS_IDLE,
-	OCPP_DIAGNOSTIC_STATUS_UPLOADED,
-	OCPP_DIAGNOSTIC_STATUS_UPLOAD_FAILED,
-	OCPP_DIAGNOSTIC_STATUS_UPLOADING
-} OcppDiagnosticsStatus;
-
+#include <OcppTypes.h>
 typedef struct
 {
 	OcppDiagnosticsStatus status;
@@ -20,5 +11,14 @@ typedef struct
 typedef struct
 {
 } OcppDiagnosticStatusNotificationResponse;
+
+OcppRetType OcppDiagnosticStatusNotification_BuildRequest(void* payload, char* string,
+														  uint32_t* stringLength);
+OcppRetType OcppDiagnosticStatusNotification_ParseRequest(char* json, jsmntok_t* token,
+														  uint32_t tokenSize, void* payload);
+OcppRetType OcppDiagnosticStatusNotification_BuildResponse(void* payload, char* string,
+														   uint32_t* stringLength);
+OcppRetType OcppDiagnosticStatusNotification_ParseResponse(char* json, jsmntok_t* token,
+														   uint32_t tokenSize, void* payload);
 
 #endif // ___OCPP_DIAGNOSTIC_STATUS_NOTIFICATION_H

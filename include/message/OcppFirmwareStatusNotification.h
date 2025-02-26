@@ -2,18 +2,7 @@
 #define __OCPP_FIRMWARE_STATUS_NOTIFICATION_H
 
 #include <OcppConfig.h>
-#include <OcppPrvHeader.h>
-
-typedef enum
-{
-	OCPP_FIRMWARE_STATUS_DOWNLOADED,
-	OCPP_FIRMWARE_STATUS_DOWNLOAD_FAILED,
-	OCPP_FIRMWARE_STATUS_DOWNLOADING,
-	OCPP_FIRMWARE_STATUS_IDLE,
-	OCPP_FIRMWARE_STATUS_INSTALLATION_FAILED,
-	OCPP_FIRMWARE_STATUS_INSTALLING,
-	OCPP_FIRMWARE_STATUS_INSTALLED
-} OcppFirmwareStatus;
+#include <OcppTypes.h>
 
 typedef struct
 {
@@ -23,5 +12,14 @@ typedef struct
 typedef struct
 {
 } OcppFirmwareStatusNotificationResponse;
+
+OcppRetType OcppFirmwareStatusNotification_BuildRequest(void* payload, char* string,
+														uint32_t* stringLength);
+OcppRetType OcppFirmwareStatusNotification_ParseRequest(char* json, jsmntok_t* token,
+														uint32_t tokenSize, void* payload);
+OcppRetType OcppFirmwareStatusNotification_BuildResponse(void* payload, char* string,
+														 uint32_t* stringLength);
+OcppRetType OcppFirmwareStatusNotification_ParseResponse(char* json, jsmntok_t* token,
+														 uint32_t tokenSize, void* payload);
 
 #endif // __OCPP_FIRMWARE_STATUS_NOTIFICATION_H

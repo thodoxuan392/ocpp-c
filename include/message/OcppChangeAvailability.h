@@ -2,13 +2,7 @@
 #define __OCPP_CHANGE_AVAILABILITY_H
 
 #include <OcppConfig.h>
-#include <OcppPrvHeader.h>
-
-typedef enum
-{
-	OCPP_AVAILABILITY_TYPE_INOPERATIVE,
-	OCPP_AVAILABILITY_TYPE_OPERATIVE
-} OcppAvailabilityType;
+#include <OcppTypes.h>
 
 typedef struct
 {
@@ -20,5 +14,14 @@ typedef struct
 {
 	OcppAvailabilityStatus status;
 } OcppChangeAvailabilityResponse;
+
+OcppRetType OcppChangeAvailability_BuildRequest(void* payload, char* string,
+												uint32_t* stringLength);
+OcppRetType OcppChangeAvailability_ParseRequest(char* json, jsmntok_t* token, uint32_t tokenSize,
+												void* payload);
+OcppRetType OcppChangeAvailability_BuildResponse(void* payload, char* string,
+												 uint32_t* stringLength);
+OcppRetType OcppChangeAvailability_ParseResponse(char* json, jsmntok_t* token, uint32_t tokenSize,
+												 void* payload);
 
 #endif // __OCPP_CHANGE_AVAILABILITY_H

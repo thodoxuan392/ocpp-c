@@ -2,7 +2,7 @@
 #define __OCPP_SEND_LOCAL_LIST_H
 
 #include <OcppConfig.h>
-#include <OcppPrvHeader.h>
+#include <OcppTypes.h>
 
 typedef struct
 {
@@ -15,5 +15,12 @@ typedef struct
 {
 	OcppUpdateStatus status;
 } OcppSendLocalListResponse;
+
+OcppRetType OcppSendLocalList_BuildRequest(void* payload, char* string, uint32_t* stringLength);
+OcppRetType OcppSendLocalList_ParseRequest(char* json, jsmntok_t* token, uint32_t tokenSize,
+										   void* payload);
+OcppRetType OcppSendLocalList_BuildResponse(void* payload, char* string, uint32_t* stringLength);
+OcppRetType OcppSendLocalList_ParseResponse(char* json, jsmntok_t* token, uint32_t tokenSize,
+											void* payload);
 
 #endif // __OCPP_SEND_LOCAL_LIST_H
