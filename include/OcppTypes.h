@@ -49,6 +49,7 @@ typedef enum
 	OCPP_MESSAGE_STATUS_NOT_IMPLEMENTED,
 	OCPP_MESSAGE_STATUS_UNLOCKED,
 	OCPP_MESSAGE_STATUS_UNLOCK_FAILED,
+	OCPP_MESSAGE_STATUS_AVAILABLE,
 
 	OCPP_MESSAGE_STATUS_MAX
 } OcppMessageStatus;
@@ -325,6 +326,26 @@ typedef enum
 	OCPP_ERROR_CODE_MAX
 } OcppErrorCode;
 
+typedef enum
+{
+	OCPP_RESET_TYPE_HARD,
+	OCPP_RESET_TYPE_SOFT,
+
+	OCPP_RESET_TYPE_MAX
+} OcppResetType;
+
+typedef enum
+{
+	OCPP_TRIGGER_MESSAGE_BOOT_NOTIFICATION,
+	OCPP_TRIGGER_MESSAGE_DIAGNOSTIC_NOTIFICATION,
+	OCPP_TRIGGER_MESSAGE_FIRMWARE_STATUS_NOTIFICATION,
+	OCPP_TRIGGER_MESSAGE_HEARTBEAT,
+	OCPP_TRIGGER_MESSAGE_METER_VALUE,
+	OCPP_TRIGGER_MESSAGE_STATUS_NOTIFICATION,
+
+	OCPP_TRIGGER_MESSAGE_MAX
+} OcppMessageTrigger;
+
 typedef char OcppCiString20Type[20];
 typedef char OcppCiString25Type[25];
 typedef char OcppCiString50Type[50];
@@ -377,6 +398,13 @@ typedef struct
 
 typedef struct
 {
+	OcppCiString50Type key;
+	bool readonly;
+	OcppCiString500Type value;
+} OcppKeyValue;
+
+typedef struct
+{
 	char value[OCPP_METER_VALUE_SAMPLED_VALUE_VALUE_MAX_LENGTH];
 	OcppSampledValueContext context;
 	OcppSampledValueFormat format;
@@ -395,15 +423,17 @@ typedef struct
 
 typedef struct
 {
+	int startPeriod;
+	int limit;
+	int numberPhases;
+} OcppChargingSchedulePeriod;
+
+typedef struct
+{
 	int duration;
 	OcppDateTime startSchedule;
 	OcppChargingRateUnitType chargingRateUnit;
-	struct
-	{
-		int startPeriod;
-		int limit;
-		int numberPhases;
-	} chargingSchedulePeriod[OCPP_CHARGE_SCHEDULE_CHARGING_SCH_PERIOD_MAX];
+	OcppChargingSchedulePeriod chargingSchedulePeriod[OCPP_CHARGE_SCHEDULE_CHARGING_SCH_PERIOD_MAX];
 	int noChargingSchedulePeriod;
 	int minChargingRate;
 } OcppChargingSchedule;
@@ -418,7 +448,7 @@ typedef struct
 	OcppChargingProfilePurpose chargingProfilePurpose;
 	OcppChargingProfileKind chargingProfileKind;
 	OcppRecurrencyKind recurrencyKind;
-	OcppChargingSchedule chargeSchedule;
+	OcppChargingSchedule chargingSchedule;
 } OcppChargingProfile;
 
 #endif // __OCPP_TYPES_H

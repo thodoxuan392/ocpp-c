@@ -18,10 +18,10 @@ typedef struct
 } OcppDataTransferResponse;
 
 OcppRetType OcppDataTransfer_BuildRequest(void* payload, char* string, uint32_t* stringLength);
-OcppRetType OcppDataTransfer_ParseRequest(char* json, jsmntok_t* token, uint32_t tokenSize,
+OcppRetType OcppDataTransfer_ParseRequest(char* json, jsmntok_t* token, uint32_t* tokenSize,
 										  void* payload);
 OcppRetType OcppDataTransfer_BuildResponse(void* payload, char* string, uint32_t* stringLength);
-OcppRetType OcppDataTransfer_ParseResponse(char* json, jsmntok_t* token, uint32_t tokenSize,
+OcppRetType OcppDataTransfer_ParseResponse(char* json, jsmntok_t* token, uint32_t* tokenSize,
 										   void* payload);
 
 #endif // __OCPP_DATA_TRANSFER_H

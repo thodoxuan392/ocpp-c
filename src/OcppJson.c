@@ -13,7 +13,7 @@ typedef enum
 
 typedef OcppRetType (*OcppJson_BuildPayloadFnc)(void* payload, char* string,
 												uint32_t* stringLength);
-typedef OcppRetType (*OcppJson_ParsePayloadFnc)(char* json, jsmntok_t* token, uint32_t tokenLen,
+typedef OcppRetType (*OcppJson_ParsePayloadFnc)(char* json, jsmntok_t* token, uint32_t* tokenLen,
 												void* payload);
 
 typedef struct
@@ -138,7 +138,7 @@ static const OcppJson_PayloadOperation
 			},
 		[OCPP_ACTION_RESERVE_NOW] =
 			{
-				{OcppReserveNow_BuildRequest, OcppReserveNow_BuildResponse},
+				{OcppReserveNow_BuildRequest, OcppReserveNow_ParseRequest},
 				{OcppReserveNow_BuildResponse, OcppReserveNow_ParseResponse},
 			},
 		[OCPP_ACTION_RESET] =
@@ -212,6 +212,8 @@ const char* OcppJson_MessageStatusMapping[OCPP_MESSAGE_STATUS_MAX] = {
 	[OCPP_MESSAGE_STATUS_NOT_IMPLEMENTED] = "NotImplemented",
 	[OCPP_MESSAGE_STATUS_UNLOCKED] = "Unlocked",
 	[OCPP_MESSAGE_STATUS_UNLOCK_FAILED] = "UnlockFailed",
+	[OCPP_MESSAGE_STATUS_AVAILABLE] = "Available",
+
 };
 
 const char* OcppJson_ChargingRateUnitTypeMapping[OCPP_CHARGING_RATE_UNIT_MAX] = {
@@ -374,7 +376,7 @@ const char* OcppJson_ReasonMapping[OCPP_REASON_MAX] = {
 const char* OcppJson_ActionIdMapping[OCPP_ACTION_MAX] = {
 	[OCPP_ACTION_AUTHORIZE] = "Authorize",
 	[OCPP_ACTION_BOOT_NOTIFICATION] = "BootNotification",
-	[OCPP_ACTION_CANCEL_RESERVATION] = "Reservation",
+	[OCPP_ACTION_CANCEL_RESERVATION] = "CancelReservation",
 	[OCPP_ACTION_CHANGE_AVAILABILITY] = "ChangeAvailability",
 	[OCPP_ACTION_CHANGE_CONFIGURATION] = "ChangeConfiguration",
 	[OCPP_ACTION_CLEAR_CACHE] = "ClearCache",
@@ -402,7 +404,7 @@ const char* OcppJson_ActionIdMapping[OCPP_ACTION_MAX] = {
 	[OCPP_ACTION_UPDATE_FIRMWARE] = "UpdateFirmware",
 };
 
-const char* OcppJson_ErrorCodeMapping[] = {
+const char* OcppJson_ErrorCodeMapping[OCPP_ERROR_CODE_MAX] = {
 	[OCPP_ERROR_CODE_NOT_IMPLEMENTED] = "NotImplemented",
 	[OCPP_ERROR_CODE_NOT_SUPPORTED] = "NotSupported",
 	[OCPP_ERROR_CODE_INTERNAL_ERROR] = "InternalError",
@@ -415,6 +417,20 @@ const char* OcppJson_ErrorCodeMapping[] = {
 	[OCPP_ERROR_CODE_GENERIC_ERROR] = "GenericError",
 	[OCPP_ERROR_CODE_FORMAT_VIOLATION] = "FormatViolation",
 	[OCPP_ERROR_CODE_FORMATION_VIOLATION] = "FormationViolation",
+};
+
+const char* OcppJson_ResetTypeMapping[OCPP_RESET_TYPE_MAX] = {
+	[OCPP_RESET_TYPE_HARD] = "Hard",
+	[OCPP_RESET_TYPE_SOFT] = "Soft",
+};
+
+const char* OcppJson_MessageTriggerMapping[OCPP_TRIGGER_MESSAGE_MAX] = {
+	[OCPP_TRIGGER_MESSAGE_BOOT_NOTIFICATION] = "BootNotification",
+	[OCPP_TRIGGER_MESSAGE_DIAGNOSTIC_NOTIFICATION] = "DiagnosticsStatusNotification",
+	[OCPP_TRIGGER_MESSAGE_FIRMWARE_STATUS_NOTIFICATION] = "FirmwareStatusNotification",
+	[OCPP_TRIGGER_MESSAGE_HEARTBEAT] = "Heartbeat",
+	[OCPP_TRIGGER_MESSAGE_METER_VALUE] = "MeterValues",
+	[OCPP_TRIGGER_MESSAGE_STATUS_NOTIFICATION] = "StatusNotification",
 };
 
 OcppRetType OcppJson_ParseMessageStatus(char* string, uint32_t stringLength,
@@ -726,7 +742,37 @@ OcppRetType OcppJson_BuildErrorCode(OcppErrorCode type, char* string, uint32_t* 
 										  string, stringLength);
 }
 
-OcppRetType OcppJson_ParseCallMessage(char* string, jsmntok_t* token, uint32_t tokenLen,
+OcppRetType OcppJson_ParseResetType(char* string, uint32_t stringLength, OcppResetType* type)
+{
+	if(OcppJson_FindGenericDataInTable(string, stringLength, OcppJson_ResetTypeMapping,
+									   OCPP_RESET_TYPE_MAX, (uint32_t*)type) == OCPP_NOT_FOUND)
+	{
+		return OCPP_INVALID;
+	}
+	return OCPP_OK;
+}
+OcppRetType OcppJson_BuildResetType(OcppResetType type, char* string, uint32_t* stringLength)
+{
+	return OcppJson_GetGenericDataInTable(type, OcppJson_ResetTypeMapping, OCPP_TRIGGER_MESSAGE_MAX,
+										  string, stringLength);
+}
+OcppRetType OcppJson_ParseMessageTrigger(char* string, uint32_t stringLength,
+										 OcppMessageTrigger* type)
+{
+	if(OcppJson_FindGenericDataInTable(string, stringLength, OcppJson_MessageTriggerMapping,
+									   OCPP_TRIGGER_MESSAGE_MAX, (uint32_t*)type) == OCPP_NOT_FOUND)
+	{
+		return OCPP_INVALID;
+	}
+	return OCPP_OK;
+}
+OcppRetType OcppJson_BuildMessageTrigger(OcppMessageTrigger type, char* string,
+										 uint32_t* stringLength)
+{
+	return OcppJson_GetGenericDataInTable(type, OcppJson_MessageTriggerMapping,
+										  OCPP_TRIGGER_MESSAGE_MAX, string, stringLength);
+}
+OcppRetType OcppJson_ParseCallMessage(char* string, jsmntok_t* token, uint32_t* tokenLen,
 									  OcppCallMessage* message)
 {
 	OcppActionId actionId = message->action;
@@ -738,10 +784,10 @@ OcppRetType OcppJson_BuildCallMessage(OcppCallMessage* message, char* string,
 									  uint32_t* stringLength)
 {
 	OcppActionId actionId = message->action;
-	return OcppJson_PayloadOperationMapping[actionId][OCPP_PAYLOAD_TYPE_RES].buildFnc(
+	return OcppJson_PayloadOperationMapping[actionId][OCPP_PAYLOAD_TYPE_REQ].buildFnc(
 		&message->payload, string, stringLength);
 }
-OcppRetType OcppJson_ParseCallResultMessage(char* string, jsmntok_t* token, uint32_t tokenLen,
+OcppRetType OcppJson_ParseCallResultMessage(char* string, jsmntok_t* token, uint32_t* tokenLen,
 											OcppCallResultMessage* message)
 {
 	OcppActionId actionId = message->action;
@@ -757,7 +803,7 @@ OcppRetType OcppJson_BuildCallResultMessage(OcppCallResultMessage* message, char
 	return OcppJson_PayloadOperationMapping[actionId][OCPP_PAYLOAD_TYPE_RES].buildFnc(
 		&message->payload, string, stringLength);
 }
-OcppRetType OcppJson_ParseCallErrorMessage(char* string, jsmntok_t* token, uint32_t tokenLen,
+OcppRetType OcppJson_ParseCallErrorMessage(char* string, jsmntok_t* token, uint32_t* tokenLen,
 										   OcppCallErrorMessage* message)
 {
 }
@@ -768,12 +814,10 @@ OcppRetType OcppJson_BuildCallErrorMessage(OcppCallErrorMessage* message, char* 
 	uint32_t buildStrLength;
 	char errorCodeStr[OCPP_ERROR_CODE_MAX_LENGTH];
 
-	uint32_t stringLengthIn = *stringLength;
-
 	(void)OcppJson_BuildErrorCode(message->errorCode, errorCodeStr, &buildStrLength);
 
-	ret = snprintf(string, stringLengthIn, "\"%s\",\"%s\",\"%s\"", errorCodeStr,
-				   message->errorDescription, message->errorDetails);
+	ret = sprintf(string, "\"%s\",\"%s\",\"%s\"", errorCodeStr, message->errorDescription,
+				  message->errorDetails);
 	if(ret < 0)
 	{
 		return OCPP_NOT_OK;
@@ -797,10 +841,8 @@ OcppRetType OcppJson_ParseDateTime(char* string, uint32_t stringLength, OcppDate
 }
 OcppRetType OcppJson_BuildDateTime(OcppDateTime* dateTime, char* string, uint32_t* stringLength)
 {
-	uint32_t stringLengthIn = *stringLength;
-	int ret =
-		snprintf(string, stringLengthIn, "%d-%d-%dT%d:%d:%dZ", &dateTime->year, &dateTime->month,
-				 &dateTime->day, &dateTime->hour, &dateTime->minute, &dateTime->second);
+	int ret = sprintf(string, "%02d-%02d-%02dT%02d:%02d:%02dZ", dateTime->year, dateTime->month,
+					  dateTime->day, dateTime->hour, dateTime->minute, dateTime->second);
 	if(ret < 0)
 	{
 		return OCPP_NOT_OK;
@@ -809,9 +851,39 @@ OcppRetType OcppJson_BuildDateTime(OcppDateTime* dateTime, char* string, uint32_
 	return OCPP_OK;
 }
 
-OcppRetType OcppJson_ParseIdTagInfo(char* string, jsmntok_t* token, uint32_t tokenLen,
+OcppRetType OcppJson_ParseIdTagInfo(char* string, jsmntok_t* token, uint32_t* tokenLen,
 									OcppIdTagInfo* idTagInfo)
 {
+	size_t i;
+	if(*tokenLen < 3)
+	{
+		Ocpp_LogError(("[OCPP] Invalid token size, expected 3, got %d", *tokenLen));
+		return OCPP_NOT_OK;
+	}
+
+	for(i = 0; (i < *tokenLen) && (token[i].end <= token[0].end); i++)
+	{
+		if(OcppJson_Equal(string, &token[i], "expiryDate") == 0)
+		{
+			OcppJson_ParseDateTime(string + token[i + 1].start,
+								   token[i + 1].end - token[i + 1].start, &idTagInfo->expiryDate);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "parentIdTag") == 0)
+		{
+			strncpy(idTagInfo->parentIdTag, string + token[i + 1].start,
+					token[i + 1].end - token[i + 1].start);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "status") == 0)
+		{
+			OcppJson_ParseMessageStatus(string + token[i + 1].start,
+										token[i + 1].end - token[i + 1].start, &idTagInfo->status);
+			i++;
+		}
+	}
+	*tokenLen = i;
+	return OCPP_OK;
 }
 OcppRetType OcppJson_BuildIdTagInfo(OcppIdTagInfo* idTagInfo, char* string, uint32_t* stringLength)
 {
@@ -819,14 +891,12 @@ OcppRetType OcppJson_BuildIdTagInfo(OcppIdTagInfo* idTagInfo, char* string, uint
 	uint32_t buildStrLength;
 	char dateTimeStr[OCPP_DATE_TIME_MAX_LENGTH];
 	char messageStatusStr[OCPP_MESSAGE_STATUS_MAX_LENGTH];
-	uint32_t stringLengthIn = *stringLength;
 
 	(void)OcppJson_BuildDateTime(&idTagInfo->expiryDate, dateTimeStr, &buildStrLength);
 	(void)OcppJson_BuildMessageStatus(idTagInfo->status, messageStatusStr, &buildStrLength);
 
-	ret = snprintf(string, stringLengthIn,
-				   "{\"expiryDate\": \"%s\",\"parentIdTag\": \"%s\",\"status\": \"%s\"}",
-				   dateTimeStr, idTagInfo->parentIdTag, messageStatusStr);
+	ret = sprintf(string, "{\"expiryDate\": \"%s\",\"parentIdTag\": \"%s\",\"status\": \"%s\"}",
+				  dateTimeStr, idTagInfo->parentIdTag, messageStatusStr);
 	if(ret < 0)
 	{
 		return OCPP_NOT_OK;
@@ -834,9 +904,43 @@ OcppRetType OcppJson_BuildIdTagInfo(OcppIdTagInfo* idTagInfo, char* string, uint
 	*stringLength = ret;
 	return OCPP_OK;
 }
-OcppRetType OcppJson_ParseAuthorizationData(char* string, jsmntok_t* token, uint32_t tokenLen,
+OcppRetType OcppJson_ParseAuthorizationData(char* string, jsmntok_t* token, uint32_t* tokenLen,
 											OcppAuthorizationData* authorizationData)
 {
+	size_t i;
+	uint32_t tokenSize;
+
+	if(*tokenLen < 3)
+	{
+		Ocpp_LogError(("[OCPP] Invalid token size, expected 3, got %d", *tokenLen));
+		return OCPP_NOT_OK;
+	}
+
+	char idTagInfoStr[OCPP_ID_TAG_INFO_MAX_LENGTH];
+
+	for(i = 0; (i < *tokenLen) && (token[i].end <= token[0].end); i++)
+	{
+		if(OcppJson_Equal(string, &token[i], "idTag") == 0)
+		{
+			strncpy(authorizationData->idTag, string + token[i + 1].start,
+					token[i + 1].end - token[i + 1].start);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "idTagInfo") == 0)
+		{
+			if(token[i + 1].type != JSMN_OBJECT)
+			{
+				Ocpp_LogError(("[OCPP] idTagInfo is not Object\r\n"));
+				return OCPP_NOT_OK;
+			}
+			tokenSize = *tokenLen - i - 1;
+			OcppJson_ParseIdTagInfo(string, &token[i + 1], &tokenSize,
+									&authorizationData->idTagInfo);
+			i += tokenSize;
+		}
+	}
+	*tokenLen = i;
+	return OCPP_OK;
 }
 OcppRetType OcppJson_BuildAuthorizationData(OcppAuthorizationData* authorizationData, char* string,
 											uint32_t* stringLength)
@@ -844,12 +948,11 @@ OcppRetType OcppJson_BuildAuthorizationData(OcppAuthorizationData* authorization
 	int ret;
 	uint32_t buildStrLength;
 	char idTagInfoStr[OCPP_ID_TAG_INFO_MAX_LENGTH];
-	uint32_t stringLengthIn = *stringLength;
 
 	(void)OcppJson_BuildIdTagInfo(&authorizationData->idTagInfo, idTagInfoStr, &buildStrLength);
 
-	ret = snprintf(string, stringLengthIn, "{\"idTag\": \"%s\",\"idTagInfo\": %s}",
-				   authorizationData->idTag, idTagInfoStr);
+	ret = sprintf(string, "{\"idTag\": \"%s\",\"idTagInfo\": %s}", authorizationData->idTag,
+				  idTagInfoStr);
 	if(ret < 0)
 	{
 		return OCPP_NOT_OK;
@@ -857,9 +960,118 @@ OcppRetType OcppJson_BuildAuthorizationData(OcppAuthorizationData* authorization
 	*stringLength = ret;
 	return OCPP_OK;
 }
-OcppRetType OcppJson_ParseSampledValue(char* string, jsmntok_t* token, uint32_t tokenLen,
+OcppRetType OcppJson_ParseKeyValue(char* string, jsmntok_t* token, uint32_t* tokenLen,
+								   OcppKeyValue* keyValue)
+{
+	size_t i;
+	uint32_t tokenSize;
+
+	if(*tokenLen < 3)
+	{
+		Ocpp_LogError(("[OCPP] Invalid token size, expected 3, got %d", *tokenLen));
+		return OCPP_NOT_OK;
+	}
+
+	for(i = 0; (i < *tokenLen) && (token[i].end <= token[0].end); i++)
+	{
+		if(OcppJson_Equal(string, &token[i], "key") == 0)
+		{
+			strncpy(keyValue->key, string + token[i + 1].start,
+					token[i + 1].end - token[i + 1].start);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "readonly") == 0)
+		{
+			OcppJson_ToBoolean(string, &token[i + 1], &keyValue->readonly);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "value") == 0)
+		{
+			strncpy(keyValue->value, string + token[i + 1].start,
+					token[i + 1].end - token[i + 1].start);
+			i++;
+		}
+	}
+	*tokenLen = i;
+	return OCPP_OK;
+}
+OcppRetType OcppJson_BuildKeyValue(OcppKeyValue* keyValue, char* string, uint32_t* stringLength)
+{
+	int ret;
+	uint32_t buildStrLength;
+
+	ret = sprintf(string, "{\"key\": \"%s\",\"readonly\": %s,\"value\": \"%s\"}", keyValue->key,
+				  OcppJson_ToBooleanStr(keyValue->readonly), keyValue->value);
+	if(ret < 0)
+	{
+		return OCPP_NOT_OK;
+	}
+	*stringLength = ret;
+	return OCPP_OK;
+}
+OcppRetType OcppJson_ParseSampledValue(char* string, jsmntok_t* token, uint32_t* tokenLen,
 									   OcppSampledValue* sampledValue)
 {
+	size_t i;
+	if(*tokenLen < 1)
+	{
+		Ocpp_LogError(("[OCPP] Invalid token size, expected 1, got %d", *tokenLen));
+		return OCPP_NOT_OK;
+	}
+
+	for(i = 0; (i < *tokenLen) && (token[i].end <= token[0].end); i++)
+	{
+		if(OcppJson_Equal(string, &token[i], "value") == 0)
+		{
+			strncpy(sampledValue->value, string + token[i + 1].start,
+					token[i + 1].end - token[i + 1].start);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "context") == 0)
+		{
+			OcppJson_ParseSampledValueContext(string + token[i + 1].start,
+											  token[i + 1].end - token[i + 1].start,
+											  &sampledValue->context);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "format") == 0)
+		{
+			OcppJson_ParseSampledValueFormat(string + token[i + 1].start,
+											 token[i + 1].end - token[i + 1].start,
+											 &sampledValue->format);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "measurand") == 0)
+		{
+			OcppJson_ParseSampledValueMeasurand(string + token[i + 1].start,
+												token[i + 1].end - token[i + 1].start,
+												&sampledValue->measurand);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "phase") == 0)
+		{
+			OcppJson_ParseSampledValuePhase(string + token[i + 1].start,
+											token[i + 1].end - token[i + 1].start,
+											&sampledValue->phase);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "location") == 0)
+		{
+			OcppJson_ParseSampledValueLocation(string + token[i + 1].start,
+											   token[i + 1].end - token[i + 1].start,
+											   &sampledValue->location);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "unit") == 0)
+		{
+			OcppJson_ParseSampledValueUnit(string + token[i + 1].start,
+										   token[i + 1].end - token[i + 1].start,
+										   &sampledValue->unit);
+			i++;
+		}
+	}
+	*tokenLen = i;
+	return OCPP_OK;
 }
 OcppRetType OcppJson_BuildSampledValue(OcppSampledValue* sampledValue, char* string,
 									   uint32_t* stringLength)
@@ -873,7 +1085,12 @@ OcppRetType OcppJson_BuildSampledValue(OcppSampledValue* sampledValue, char* str
 	char locationStr[OCPP_METER_VALUE_SAMPLED_VALUE_LOCATION_MAX_LENGTH];
 	char unitStr[OCPP_METER_VALUE_SAMPLED_VALUE_UNIT_MAX_LENGTH];
 
-	uint32_t stringLengthIn = *stringLength;
+	memset(contextStr, 0, sizeof(contextStr));
+	memset(formatStr, 0, sizeof(formatStr));
+	memset(measurandStr, 0, sizeof(measurandStr));
+	memset(phaseStr, 0, sizeof(phaseStr));
+	memset(locationStr, 0, sizeof(locationStr));
+	memset(unitStr, 0, sizeof(unitStr));
 
 	(void)OcppJson_BuildSampledValueContext(sampledValue->context, contextStr, &buildStrLength);
 	(void)OcppJson_BuildSampledValueFormat(sampledValue->format, formatStr, &buildStrLength);
@@ -883,11 +1100,155 @@ OcppRetType OcppJson_BuildSampledValue(OcppSampledValue* sampledValue, char* str
 	(void)OcppJson_BuildSampledValueLocation(sampledValue->location, locationStr, &buildStrLength);
 	(void)OcppJson_BuildSampledValueUnit(sampledValue->unit, unitStr, &buildStrLength);
 
-	ret = snprintf(string, stringLengthIn,
-				   "{\"value\": \"%s\",\"context\": \"%s\",\"format\": \"%s\",\"measurand\": "
-				   "\"%s\",\"phase\": \"%s\",\"location\": \"%s\",\"unit\": \"%s\"}",
-				   sampledValue->value, contextStr, formatStr, measurandStr, phaseStr, locationStr,
-				   unitStr);
+	ret = sprintf(string,
+				  "{\"value\": \"%s\",\"context\": \"%s\",\"format\": \"%s\",\"measurand\": "
+				  "\"%s\",\"phase\": \"%s\",\"location\": \"%s\",\"unit\": \"%s\"}",
+				  sampledValue->value, contextStr, formatStr, measurandStr, phaseStr, locationStr,
+				  unitStr);
+
+	if(ret < 0)
+	{
+		return OCPP_NOT_OK;
+	}
+
+	*stringLength = ret;
+	return OCPP_OK;
+}
+OcppRetType OcppJson_ParseMeterValue(char* string, jsmntok_t* token, uint32_t* tokenLen,
+									 OcppMeterValue* meterValue)
+{
+	size_t i;
+	uint32_t tokenSize;
+	uint32_t sampledValueTokenIdx;
+
+	if(*tokenLen < 1)
+	{
+		Ocpp_LogError(("[OCPP] Invalid token size, expected 1, got %d", tokenLen));
+		return OCPP_NOT_OK;
+	}
+
+	char timestampStr[OCPP_DATE_TIME_MAX_LENGTH];
+	jsmntok_t* sampledValueTokenList[OCPP_METER_VALUE_SAMPLED_VALUE_ARRAY_MAX_LENGTH];
+	uint32_t sampledValueTokenListIdx = 0;
+
+	for(i = 0; (i < *tokenLen) && (token[i].end <= token[0].end); i++)
+	{
+		if(OcppJson_Equal(string, &token[i], "timestamp") == 0)
+		{
+			strncpy(timestampStr, string + token[i + 1].start,
+					token[i + 1].end - token[i + 1].start);
+			OcppJson_ParseDateTime(timestampStr, strlen(timestampStr), &meterValue->timestamp);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "sampledValue") == 0)
+		{
+			if(token[i + 1].type != JSMN_ARRAY)
+			{
+				Ocpp_LogError(("[OCPP] sampledValue should be ARRAY\r\n"));
+				return OCPP_NOT_OK;
+			}
+			meterValue->noSampledValue = token[i + 1].size;
+
+			sampledValueTokenIdx = i + 2;
+
+			for(size_t sampledIdx = 0; sampledIdx < meterValue->noSampledValue; sampledIdx++)
+			{
+				tokenSize = *tokenLen - sampledValueTokenIdx;
+
+				OcppJson_ParseSampledValue(string, &token[sampledValueTokenIdx], &tokenSize,
+										   &meterValue->sampledValue[sampledIdx]);
+				sampledValueTokenIdx += tokenSize;
+			}
+			i = sampledValueTokenIdx - 1;
+		}
+	}
+	*tokenLen = i;
+	return OCPP_OK;
+}
+OcppRetType OcppJson_BuildMeterValue(OcppMeterValue* meterValue, char* string,
+									 uint32_t* stringLength)
+{
+	int ret;
+	uint32_t buildStrLength;
+
+	char timestampStr[OCPP_DATE_TIME_MAX_LENGTH];
+	char sampledValueStr[OCPP_METER_VALUE_SAMPLED_VALUE_MAX_LENGTH];
+	char sampledValueArrStr[OCPP_METER_VALUE_SAMPLED_VALUE_ARRAY_MAX_LENGTH *
+							OCPP_METER_VALUE_SAMPLED_VALUE_MAX_LENGTH];
+
+	memset(timestampStr, 0, sizeof(timestampStr));
+	memset(sampledValueStr, 0, sizeof(sampledValueStr));
+	memset(sampledValueArrStr, 0, sizeof(sampledValueArrStr));
+
+	(void)OcppJson_BuildDateTime(&meterValue->timestamp, timestampStr, &buildStrLength);
+
+	memset(sampledValueArrStr, 0, sizeof(sampledValueArrStr));
+	strcat(sampledValueArrStr, "[");
+
+	for(size_t i = 0; i < meterValue->noSampledValue; i++)
+	{
+		(void)OcppJson_BuildSampledValue(&meterValue->sampledValue[i], sampledValueStr,
+										 &buildStrLength);
+		strncat(sampledValueArrStr, sampledValueStr, buildStrLength);
+		if(i != (meterValue->noSampledValue - 1))
+		{
+			strcat(sampledValueArrStr, ",");
+		}
+	}
+	strcat(sampledValueArrStr, "]");
+
+	ret = sprintf(string, "{\"timestamp\": \"%s\", \"sampledValue\": %s}", timestampStr,
+				  sampledValueArrStr);
+
+	if(ret < 0)
+	{
+		return OCPP_NOT_OK;
+	}
+
+	*stringLength = ret;
+	return OCPP_OK;
+}
+OcppRetType OcppJson_ParseChargingSchedulePeriod(char* string, jsmntok_t* token, uint32_t* tokenLen,
+												 OcppChargingSchedulePeriod* chargingSchedulePeriod)
+{
+	size_t i;
+	if(*tokenLen < 3)
+	{
+		Ocpp_LogError(("[OCPP] Invalid token size, expected 3, got %d", tokenLen));
+		return OCPP_NOT_OK;
+	}
+
+	for(i = 0; (i < *tokenLen) && (token[i].end <= token[0].end); i++)
+	{
+		if(OcppJson_Equal(string, &token[i], "startPeriod") == 0)
+		{
+			OcppJson_ToNumber(string, &token[i + 1], &chargingSchedulePeriod->startPeriod);
+
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "limit") == 0)
+		{
+			OcppJson_ToNumber(string, &token[i + 1], &chargingSchedulePeriod->limit);
+
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "numberPhases") == 0)
+		{
+			OcppJson_ToNumber(string, &token[i + 1], &chargingSchedulePeriod->numberPhases);
+			i++;
+		}
+	}
+	*tokenLen = i;
+	return OCPP_OK;
+}
+OcppRetType OcppJson_BuildChargingSchedulePeriod(OcppChargingSchedulePeriod* chargingSchedulePeriod,
+												 char* string, uint32_t* stringLength)
+{
+	int ret;
+
+	ret = sprintf(string, "{\"startPeriod\": %d,\"limit\": %d,\"numberPhases\": %d}",
+				  chargingSchedulePeriod->startPeriod, chargingSchedulePeriod->limit,
+				  chargingSchedulePeriod->numberPhases);
 	if(ret < 0)
 	{
 		return OCPP_NOT_OK;
@@ -895,44 +1256,71 @@ OcppRetType OcppJson_BuildSampledValue(OcppSampledValue* sampledValue, char* str
 	*stringLength = ret;
 	return OCPP_OK;
 }
-OcppRetType OcppJson_ParseMeterValue(char* string, jsmntok_t* token, uint32_t tokenLen,
-									 OcppMeterValue* meterValue)
-{
-}
-OcppRetType OcppJson_BuildMeterValue(OcppMeterValue* meterValue, char* string,
-									 uint32_t* stringLength)
-{
-	int ret;
-	uint32_t buildStrLength;
-	char sampledValueStr[OCPP_METER_VALUE_SAMPLED_VALUE_CONTEXT_MAX_LENGTH];
-
-	uint32_t stringLengthIn = *stringLength;
-
-	memset(string, 0, stringLengthIn);
-	strcat(string, "[");
-
-	for(size_t i = 0; i < meterValue->noSampledValue; i++)
-	{
-		(void)OcppJson_BuildSampledValue(&meterValue->sampledValue[i], sampledValueStr,
-										 buildStrLength);
-		strncat(string, sampledValueStr, buildStrLength);
-		if(i != (meterValue->noSampledValue - 1))
-		{
-			strcat(string, ',');
-		}
-	}
-	strcat(string, ']');
-
-	if(ret < 0)
-	{
-		return OCPP_NOT_OK;
-	}
-	*stringLength = strlen(string);
-	return OCPP_OK;
-}
-OcppRetType OcppJson_ParseChargingSchedule(char* string, jsmntok_t* token, uint32_t tokenLen,
+OcppRetType OcppJson_ParseChargingSchedule(char* string, jsmntok_t* token, uint32_t* tokenLen,
 										   OcppChargingSchedule* chargingSchedule)
 {
+	size_t i;
+	uint32_t tokenSize;
+	uint32_t chSchPeriodTokenIdx;
+
+	if(*tokenLen < 1)
+	{
+		Ocpp_LogError(("[OCPP] Invalid token size, expected 1, got %d", tokenLen));
+		return OCPP_NOT_OK;
+	}
+
+	for(i = 0; (i < *tokenLen) && (token[i].end <= token[0].end); i++)
+	{
+		if(OcppJson_Equal(string, &token[i], "duration") == 0)
+		{
+			OcppJson_ToNumber(string, &token[i + 1], &chargingSchedule->duration);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "startSchedule") == 0)
+		{
+			OcppJson_ParseDateTime(string + token[i + 1].start,
+								   token[i + 1].end - token[i + 1].start,
+								   &chargingSchedule->startSchedule);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "chargingRateUnit") == 0)
+		{
+			OcppJson_ParseChargingRateUnitType(string + token[i + 1].start,
+											   token[i + 1].end - token[i + 1].start,
+											   &chargingSchedule->chargingRateUnit);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "chargingSchedulePeriod") == 0)
+		{
+			if(token[i + 1].type != JSMN_ARRAY)
+			{
+				Ocpp_LogError(("[OCPP] chargingSchedulePeriod should be ARRAY\r\n"));
+				return OCPP_NOT_OK;
+			}
+			chargingSchedule->noChargingSchedulePeriod = token[i + 1].size;
+
+			chSchPeriodTokenIdx = i + 2;
+
+			for(size_t chSchPeriodIdx = 0;
+				chSchPeriodIdx < chargingSchedule->noChargingSchedulePeriod; chSchPeriodIdx++)
+			{
+				tokenSize = *tokenLen - chSchPeriodTokenIdx;
+
+				OcppJson_ParseChargingSchedulePeriod(
+					string, &token[chSchPeriodTokenIdx], &tokenSize,
+					&chargingSchedule->chargingSchedulePeriod[chSchPeriodIdx]);
+				chSchPeriodTokenIdx += tokenSize;
+			}
+			i = chSchPeriodTokenIdx - 1;
+		}
+		else if(OcppJson_Equal(string, &token[i], "minChargingRate") == 0)
+		{
+			OcppJson_ToNumber(string, &token[i + 1], &chargingSchedule->minChargingRate);
+			i++;
+		}
+	}
+	*tokenLen = i;
+	return OCPP_OK;
 }
 OcppRetType OcppJson_BuildChargingSchedule(OcppChargingSchedule* chargingSchedule, char* string,
 										   uint32_t* stringLength)
@@ -944,7 +1332,10 @@ OcppRetType OcppJson_BuildChargingSchedule(OcppChargingSchedule* chargingSchedul
 	char chargingSchedulePeriodStr[OCPP_CHARGE_SCHEDULE_CHARGING_SCH_PERIOD_MAX_LENGTH];
 	char chargingSchedulePeriodArrStr[OCPP_CHARGE_SCHEDULE_CHARGING_SCH_PERIOD_ARR_MAX_LENGTH];
 
-	uint32_t stringLengthIn = *stringLength;
+	memset(startScheduleStr, 0, sizeof(startScheduleStr));
+	memset(chargingRateUnitStr, 0, sizeof(chargingRateUnitStr));
+	memset(chargingSchedulePeriodStr, 0, sizeof(chargingSchedulePeriodStr));
+	memset(chargingSchedulePeriodArrStr, 0, sizeof(chargingSchedulePeriodArrStr));
 
 	(void)OcppJson_BuildDateTime(&chargingSchedule->startSchedule, startScheduleStr,
 								 &buildStrLength);
@@ -954,25 +1345,22 @@ OcppRetType OcppJson_BuildChargingSchedule(OcppChargingSchedule* chargingSchedul
 	strcat(chargingSchedulePeriodArrStr, "[");
 	for(size_t i = 0; i < chargingSchedule->noChargingSchedulePeriod; i++)
 	{
-		buildStrLength = sprintf(chargingSchedulePeriodStr,
-								 "{\"startPeriod\": %d, \"limit\": %d, \"numberPhases\": %d}",
-								 chargingSchedule->chargingSchedulePeriod[i].startPeriod,
-								 chargingSchedule->chargingSchedulePeriod[i].limit,
-								 chargingSchedule->chargingSchedulePeriod[i].numberPhases);
+		OcppJson_BuildChargingSchedulePeriod(&chargingSchedule->chargingSchedulePeriod[i],
+											 chargingSchedulePeriodStr, &buildStrLength);
 		strncat(chargingSchedulePeriodArrStr, chargingSchedulePeriodStr, buildStrLength);
 		if(i != (chargingSchedule->noChargingSchedulePeriod - 1))
 		{
-			strcat(chargingSchedulePeriodArrStr, ',');
+			strcat(chargingSchedulePeriodArrStr, ",");
 		}
 	}
-	strcat(chargingSchedulePeriodArrStr, ']');
+	strcat(chargingSchedulePeriodArrStr, "]");
 
-	ret = snprintf(string, stringLengthIn,
-				   "{\"duration\": \"%d\",\"startSchedule\": \"%s\",\"chargingRateUnit\": "
-				   "\"%s\",\"chargingSchedulePeriod\": "
-				   "%s,\"minChargingRate\": %d}",
-				   chargingSchedule->duration, startScheduleStr, chargingRateUnitStr,
-				   chargingSchedulePeriodArrStr, chargingSchedule->minChargingRate);
+	ret = sprintf(string,
+				  "{\"duration\": %d,\"startSchedule\": \"%s\",\"chargingRateUnit\": "
+				  "\"%s\",\"chargingSchedulePeriod\": "
+				  "%s,\"minChargingRate\": %d}",
+				  chargingSchedule->duration, startScheduleStr, chargingRateUnitStr,
+				  chargingSchedulePeriodArrStr, chargingSchedule->minChargingRate);
 	if(ret < 0)
 	{
 		return OCPP_NOT_OK;
@@ -980,9 +1368,83 @@ OcppRetType OcppJson_BuildChargingSchedule(OcppChargingSchedule* chargingSchedul
 	*stringLength = ret;
 	return OCPP_OK;
 }
-OcppRetType OcppJson_ParseChargingProfile(char* string, jsmntok_t* token, uint32_t tokenLen,
+OcppRetType OcppJson_ParseChargingProfile(char* string, jsmntok_t* token, uint32_t* tokenLen,
 										  OcppChargingProfile* chargingProfile)
 {
+	size_t i;
+	uint32_t tokenSize;
+	if(*tokenLen < 5)
+	{
+		Ocpp_LogError(("[OCPP] Invalid token size, expected , got %d", tokenLen));
+		return OCPP_NOT_OK;
+	}
+
+	for(i = 0; (i < *tokenLen) && (token[i].end <= token[0].end); i++)
+	{
+		if(OcppJson_Equal(string, &token[i], "chargingProfileId") == 0)
+		{
+			OcppJson_ToNumber(string, &token[i + 1], &chargingProfile->chargingProfileId);
+
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "transactionId") == 0)
+		{
+			OcppJson_ToNumber(string, &token[i + 1], &chargingProfile->transactionId);
+
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "stackLevel") == 0)
+		{
+			OcppJson_ToNumber(string, &token[i + 1], &chargingProfile->stackLevel);
+
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "validFrom") == 0)
+		{
+			OcppJson_ParseDateTime(string + token[i + 1].start,
+								   token[i + 1].end - token[i + 1].start,
+								   &chargingProfile->validFrom);
+
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "validTo") == 0)
+		{
+			OcppJson_ParseDateTime(string + token[i + 1].start,
+								   token[i + 1].end - token[i + 1].start,
+								   &chargingProfile->validTo);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "chargingProfilePurpose") == 0)
+		{
+			OcppJson_ParseChargingProfilePurpose(string + token[i + 1].start,
+												 token[i + 1].end - token[i + 1].start,
+												 &chargingProfile->chargingProfilePurpose);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "chargingProfileKind") == 0)
+		{
+			OcppJson_ParseChargingProfileKind(string + token[i + 1].start,
+											  token[i + 1].end - token[i + 1].start,
+											  &chargingProfile->chargingProfileKind);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "recurrencyKind") == 0)
+		{
+			OcppJson_ParseRecurrencyKind(string + token[i + 1].start,
+										 token[i + 1].end - token[i + 1].start,
+										 &chargingProfile->recurrencyKind);
+			i++;
+		}
+		else if(OcppJson_Equal(string, &token[i], "chargingSchedule") == 0)
+		{
+			tokenSize = *tokenLen - i - 1;
+			OcppJson_ParseChargingSchedule(string, &token[i + 1], &tokenSize,
+										   &chargingProfile->chargingSchedule);
+			i += tokenSize;
+		}
+	}
+	*tokenLen = i;
+	return OCPP_OK;
 }
 OcppRetType OcppJson_BuildChargingProfile(OcppChargingProfile* chargingProfile, char* string,
 										  uint32_t* stringLength)
@@ -996,7 +1458,12 @@ OcppRetType OcppJson_BuildChargingProfile(OcppChargingProfile* chargingProfile, 
 	char recurrencyKindStr[OCPP_RECURRENCY_KIND_MAX_LENGTH];
 	char chargeScheduleStr[OCPP_CHARGE_SCHEDULE_CHARGING_SCH_MAX_LENGTH];
 
-	uint32_t stringLengthIn = *stringLength;
+	memset(validFromStr, 0, sizeof(validFromStr));
+	memset(validToStr, 0, sizeof(validToStr));
+	memset(chargingProfilePurposeStr, 0, sizeof(chargingProfilePurposeStr));
+	memset(chargingProfileKindStr, 0, sizeof(chargingProfileKindStr));
+	memset(recurrencyKindStr, 0, sizeof(recurrencyKindStr));
+	memset(chargeScheduleStr, 0, sizeof(chargeScheduleStr));
 
 	(void)OcppJson_BuildDateTime(&chargingProfile->validFrom, validFromStr, &buildStrLength);
 	(void)OcppJson_BuildDateTime(&chargingProfile->validTo, validToStr, &buildStrLength);
@@ -1007,11 +1474,11 @@ OcppRetType OcppJson_BuildChargingProfile(OcppChargingProfile* chargingProfile, 
 											chargingProfileKindStr, &buildStrLength);
 	(void)OcppJson_BuildRecurrencyKind(chargingProfile->recurrencyKind, recurrencyKindStr,
 									   &buildStrLength);
-	(void)OcppJson_BuildChargingSchedule(&chargingProfile->chargeSchedule, chargeScheduleStr,
+	(void)OcppJson_BuildChargingSchedule(&chargingProfile->chargingSchedule, chargeScheduleStr,
 										 &buildStrLength);
 
-	ret = snprintf(
-		string, stringLengthIn,
+	ret = sprintf(
+		string,
 		"{\"chargingProfileId\": %d,\"transactionId\": %d,\"stackLevel\": %d,\"validFrom\": "
 		"\"%s\",\"validTo\": \"%s\",\"chargingProfilePurpose\": \"%s\",\"chargingProfileKind\": "
 		"\"%s\",\"recurrencyKind\": \"%s\",\"chargeSchedule\": %s}",
@@ -1043,8 +1510,28 @@ OcppRetType OcppJson_ToNumber(const char* json, jsmntok_t* tok, int* number)
 }
 OcppRetType OcppJson_ToString(const char* json, jsmntok_t* tok, char* string)
 {
-	strncpy(string, json + tok->start, tok->start - tok->end);
+	strncpy(string, json + tok->start, tok->end - tok->start);
 	return OCPP_OK;
+}
+OcppRetType OcppJson_ToBoolean(const char* json, jsmntok_t* tok, bool* boolean)
+{
+	if(strncmp(json + tok->start, "false", tok->end - tok->start) == 0 ||
+	   strncmp(json + tok->start, "0", tok->end - tok->start) == 0)
+	{
+		*boolean = false;
+		return OCPP_OK;
+	}
+	if(strncmp(json + tok->start, "true", tok->end - tok->start) == 0 ||
+	   strncmp(json + tok->start, "1", tok->end - tok->start) == 0)
+	{
+		*boolean = true;
+		return OCPP_OK;
+	}
+	return OCPP_NOT_OK;
+}
+char* OcppJson_ToBooleanStr(bool boolean)
+{
+	return (boolean ? "true" : "false");
 }
 static OcppRetType OcppJson_FindGenericDataInTable(char* string, uint32_t stringLength,
 												   const char** mappingTable,
@@ -1054,7 +1541,7 @@ static OcppRetType OcppJson_FindGenericDataInTable(char* string, uint32_t string
 	OcppRetType retType = OCPP_NOT_FOUND;
 	for(uint32_t idx = 0; idx < mappingTableLength; idx++)
 	{
-		if(0 == strcmp(mappingTable[idx], string))
+		if(0 == strncmp(mappingTable[idx], string, stringLength))
 		{
 			*foundIndex = idx;
 			retType = OCPP_OK;
@@ -1068,13 +1555,10 @@ static OcppRetType OcppJson_GetGenericDataInTable(uint32_t index, const char** m
 												  uint32_t mappingTableLength, char* string,
 												  uint32_t* stringLength)
 {
-	uint32_t stringLengthIn = *stringLength;
-	uint32_t stringLengthOut;
 	if(index >= mappingTableLength)
 	{
 		return OCPP_INVALID;
 	}
-	stringLengthOut = strncpy(string, mappingTable[index], stringLengthIn);
-	*stringLength = stringLengthOut;
+	*stringLength = strcpy(string, mappingTable[index]);
 	return OCPP_OK;
 }

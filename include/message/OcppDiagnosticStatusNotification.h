@@ -15,10 +15,10 @@ typedef struct
 OcppRetType OcppDiagnosticStatusNotification_BuildRequest(void* payload, char* string,
 														  uint32_t* stringLength);
 OcppRetType OcppDiagnosticStatusNotification_ParseRequest(char* json, jsmntok_t* token,
-														  uint32_t tokenSize, void* payload);
+														  uint32_t* tokenSize, void* payload);
 OcppRetType OcppDiagnosticStatusNotification_BuildResponse(void* payload, char* string,
 														   uint32_t* stringLength);
 OcppRetType OcppDiagnosticStatusNotification_ParseResponse(char* json, jsmntok_t* token,
-														   uint32_t tokenSize, void* payload);
+														   uint32_t* tokenSize, void* payload);
 
 #endif // ___OCPP_DIAGNOSTIC_STATUS_NOTIFICATION_H

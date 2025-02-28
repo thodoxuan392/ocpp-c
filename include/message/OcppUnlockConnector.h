@@ -15,10 +15,10 @@ typedef struct
 } OcppUnlockConnectorResponse;
 
 OcppRetType OcppUnlockConnector_BuildRequest(void* payload, char* string, uint32_t* stringLength);
-OcppRetType OcppUnlockConnector_ParseRequest(char* json, jsmntok_t* token, uint32_t tokenSize,
+OcppRetType OcppUnlockConnector_ParseRequest(char* json, jsmntok_t* token, uint32_t* tokenSize,
 											 void* payload);
 OcppRetType OcppUnlockConnector_BuildResponse(void* payload, char* string, uint32_t* stringLength);
-OcppRetType OcppUnlockConnector_ParseResponse(char* json, jsmntok_t* token, uint32_t tokenSize,
+OcppRetType OcppUnlockConnector_ParseResponse(char* json, jsmntok_t* token, uint32_t* tokenSize,
 											  void* payload);
 
 #endif // __OCPP_UNLOCK_CONNECTOR_H

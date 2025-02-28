@@ -16,10 +16,10 @@ typedef struct
 OcppRetType OcppFirmwareStatusNotification_BuildRequest(void* payload, char* string,
 														uint32_t* stringLength);
 OcppRetType OcppFirmwareStatusNotification_ParseRequest(char* json, jsmntok_t* token,
-														uint32_t tokenSize, void* payload);
+														uint32_t* tokenSize, void* payload);
 OcppRetType OcppFirmwareStatusNotification_BuildResponse(void* payload, char* string,
 														 uint32_t* stringLength);
 OcppRetType OcppFirmwareStatusNotification_ParseResponse(char* json, jsmntok_t* token,
-														 uint32_t tokenSize, void* payload);
+														 uint32_t* tokenSize, void* payload);
 
 #endif // __OCPP_FIRMWARE_STATUS_NOTIFICATION_H

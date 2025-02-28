@@ -21,11 +21,11 @@ typedef struct
 
 OcppRetType OcppGetCompositeSchedule_BuildRequest(void* payload, char* string,
 												  uint32_t* stringLength);
-OcppRetType OcppGetCompositeSchedule_ParseRequest(char* json, jsmntok_t* token, uint32_t tokenSize,
+OcppRetType OcppGetCompositeSchedule_ParseRequest(char* json, jsmntok_t* token, uint32_t* tokenSize,
 												  void* payload);
 OcppRetType OcppGetCompositeSchedule_BuildResponse(void* payload, char* string,
 												   uint32_t* stringLength);
-OcppRetType OcppGetCompositeSchedule_ParseResponse(char* json, jsmntok_t* token, uint32_t tokenSize,
-												   void* payload);
+OcppRetType OcppGetCompositeSchedule_ParseResponse(char* json, jsmntok_t* token,
+												   uint32_t* tokenSize, void* payload);
 
 #endif // __OCPP_GET_COMPOSITE_SCHEDULE_H

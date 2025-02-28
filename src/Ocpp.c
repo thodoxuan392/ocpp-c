@@ -20,6 +20,7 @@ static OcppRetType Ocpp_GetActionIdByUniqueId(OcppHandle* ocppHandle, OcppUuid u
 											  OcppActionId* actionId);
 static OcppRetType Ocpp_SetActionIdByUniqueId(OcppHandle* ocppHandle, OcppUuid uniqueId,
 											  OcppActionId actionId);
+static OcppRetType Ocpp_GetOcppHandleBySocketId(int socketId, OcppHandle** ocppHandle);
 
 static OcppHandle* Ocpp_handleRefTable[OCPP_CLIENT_NO_SUPPORT];
 static bool Ocpp_isConnected[OCPP_CLIENT_NO_SUPPORT];
@@ -28,16 +29,19 @@ static OcppMessage Ocpp_rxMessage;
 
 OcppRetType Ocpp_Init(OcppHandle* ocppHandle)
 {
+	Ocpp_handleRefTable[Ocpp_noClient++] = ocppHandle;
 	ocppHandle->webSocketIntf->registerEventCallbackPf(Ocpp_WebSocketEventCallback);
 }
 OcppRetType Ocpp_DeInit(OcppHandle* ocppHandle)
 {
+	ocppHandle->rxBufferLength = 0;
 }
 OcppRetType Ocpp_Loop(OcppHandle* ocppHandle)
 {
 	if(Ocpp_ParseMessage(ocppHandle, ocppHandle->rxBuffer, ocppHandle->rxBufferLength,
-						 &Ocpp_rxMessage))
+						 &Ocpp_rxMessage) == OCPP_OK)
 	{
+		ocppHandle->rxBufferLength = 0;
 		if(ocppHandle->messageListener != NULL)
 		{
 			ocppHandle->messageListener(&Ocpp_rxMessage);
@@ -55,6 +59,18 @@ OcppRetType Ocpp_SendMessage(OcppHandle* ocppHandle, OcppMessage* message)
 	OcppRetType retType;
 	uint32_t txSize;
 
+	// Get action from request pool stored before
+	if(message->messageTypeId == OCPP_MESSAGE_TYPE_CALL_RESULT)
+	{
+		retType = Ocpp_GetActionIdByUniqueId(ocppHandle, message->uniqueId, &message->call.action);
+		if(retType != OCPP_OK)
+		{
+			Ocpp_LogError(("[OCPP] Cannot get action with UniqueId#%s\r\n", message->call.action,
+						   message->uniqueId));
+			return OCPP_NOT_OK;
+		}
+	}
+
 	retType = Ocpp_BuildMessage(ocppHandle, message, ocppHandle->txBuffer, &txSize);
 	if(retType != OCPP_OK)
 	{
@@ -69,12 +85,53 @@ OcppRetType Ocpp_SendMessage(OcppHandle* ocppHandle, OcppMessage* message)
 		return retType;
 	}
 
+	// Save request to pool if client send request message
+	if(message->messageTypeId == OCPP_MESSAGE_TYPE_CALL)
+	{
+		retType = Ocpp_SetActionIdByUniqueId(ocppHandle, message->uniqueId, message->call.action);
+		if(retType != OCPP_OK)
+		{
+			Ocpp_LogError(("[OCPP] Cannot save action %d by uniqueId#%s\r\n", message->call.action,
+						   message->uniqueId));
+			return OCPP_NOT_OK;
+		}
+	}
+
 	return OCPP_OK;
 }
 
 static OcppRetType Ocpp_WebSocketEventCallback(int socketId, OcppWebSocketEvent event,
 											   uint8_t* data, uint32_t dataSize)
 {
+	OcppHandle* ocppHandle;
+	OcppRetType ret = Ocpp_GetOcppHandleBySocketId(socketId, &ocppHandle);
+	if(ret != OCPP_OK)
+	{
+		Ocpp_LogError(("[OCPP] Cannot get Ocpp Client by socketId %d\r\n", socketId));
+		return OCPP_NOT_OK;
+	}
+
+	if(event == OCPP_WEB_SOCKET_EVENT_CONNECTED)
+	{
+		ocppHandle->connected = true;
+	}
+	else if(event == OCPP_WEB_SOCKET_EVENT_DISCONNECTED)
+	{
+		ocppHandle->connected = false;
+	}
+	else if(event == OCPP_WEB_SOCKET_EVENT_RX_DATA)
+	{
+		if((dataSize + ocppHandle->rxBufferLength) > OCPP_RX_BUFFER_MAX_LENGTH)
+		{
+			Ocpp_LogError(("[OCPP] Message buffer is overflow %d, maximum %d\r\n",
+						   dataSize + ocppHandle, OCPP_RX_BUFFER_MAX_LENGTH));
+			return OCPP_NOT_OK;
+		}
+		memcpy(&ocppHandle->rxBuffer[ocppHandle->rxBufferLength], data, dataSize);
+		ocppHandle->rxBufferLength += dataSize;
+	}
+
+	return OCPP_OK;
 }
 static OcppRetType Ocpp_WebSocketSendData(OcppHandle* ocppHandle, uint8_t* data, uint32_t dataSize)
 {
@@ -87,11 +144,13 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 {
 	jsmn_parser parser;
 	jsmntok_t tokens[OCPP_MESSAGE_MAX_TOKEN];
+	uint32_t tokenSize;
 
+	jsmn_init(&parser);
 	int noToken = jsmn_parse(&parser, data, dataSize, tokens, OCPP_MESSAGE_MAX_TOKEN);
 	if(noToken < 0)
 	{
-		Ocpp_LogError(("[OCPP] Error parsing message %d\r\n", noToken));
+		Ocpp_LogError(("[OCPP] Error parsing message %s, err#%d\r\n", data, noToken));
 		return OCPP_NOT_OK;
 	}
 	if((noToken < 1) || ((tokens[0].type != JSMN_ARRAY)))
@@ -100,14 +159,28 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 		return OCPP_NOT_OK;
 	}
 
-	OcppJson_ToNumber(data, &tokens[0], &message->messageTypeId);
+	memset(message, 0, sizeof(OcppMessage));
+
+	char actionIdStr[OCPP_ACTION_ID_MAX_LENGTH];
+	memset(actionIdStr, 0, OCPP_ACTION_ID_MAX_LENGTH);
+
+	OcppJson_ToNumber(data, &tokens[1], &message->messageTypeId);
+
+	printf("Ocpp_ParseMessage messageTypeId %d \r\n", message->messageTypeId);
 
 	switch(message->messageTypeId)
 	{
 		case OCPP_MESSAGE_TYPE_CALL:
-			OcppJson_ToString(data, &tokens[1], message->uniqueId);
-			OcppJson_ToNumber(data, &tokens[2], &message->call.action);
-			if(OcppJson_ParseCallMessage(data, &tokens[3], noToken - 3, message) != OCPP_OK)
+			OcppJson_ToString(data, &tokens[2], message->uniqueId);
+			printf("Ocpp_ParseMessage uniqueId %s \r\n", message->uniqueId);
+
+			OcppJson_ToString(data, &tokens[3], actionIdStr);
+			printf("Ocpp_ParseMessage actionId %s \r\n", actionIdStr);
+
+			OcppJson_ParseActionId(actionIdStr, strlen(actionIdStr), &message->call.action);
+
+			tokenSize = noToken - 4;
+			if(OcppJson_ParseCallMessage(data, &tokens[4], &tokenSize, &message->call) != OCPP_OK)
 			{
 				Ocpp_LogError(
 					("[OCPP] Parse call message with uniqueId#%s failed\r\n", message->uniqueId));
@@ -124,7 +197,9 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 			}
 			break;
 		case OCPP_MESSAGE_TYPE_CALL_RESULT:
-			OcppJson_ToString(data, &tokens[1], message->uniqueId);
+			OcppJson_ToString(data, &tokens[2], message->uniqueId);
+			printf("Ocpp_ParseMessage uniqueId %s \r\n", message->uniqueId);
+
 			// Get request from pool
 			if(Ocpp_GetActionIdByUniqueId(ocppHandle, message->uniqueId,
 										  &message->callResult.action) != OCPP_OK)
@@ -133,7 +208,11 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 					("[OCPP] UniqueId#%s of Call Result not found in pool\r\n", message->uniqueId));
 				return OCPP_NOT_OK;
 			}
-			if(OcppJson_ParseCallResultMessage(data, &tokens[2], noToken - 2, message) != OCPP_OK)
+			printf("Ocpp_ParseMessage actionId %d \r\n", message->callResult.action);
+
+			tokenSize = noToken - 3;
+			if(OcppJson_ParseCallResultMessage(data, &tokens[3], &tokenSize,
+											   &message->callResult) != OCPP_OK)
 			{
 				Ocpp_LogError(("[OCPP] Parse call result message with uniqueId#%s failed\r\n",
 							   message->uniqueId));
@@ -141,8 +220,11 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 			}
 			break;
 		case OCPP_MESSAGE_TYPE_CALL_ERROR:
-			OcppJson_ToNumber(data, &tokens[1], &message->uniqueId);
-			if(OcppJson_ParseCallErrorMessage(data, &tokens[2], noToken - 2, message) != OCPP_OK)
+			OcppJson_ToString(data, &tokens[2], message->uniqueId);
+
+			tokenSize = noToken - 3;
+			if(OcppJson_ParseCallErrorMessage(data, &tokens[3], &tokenSize, &message->callError) !=
+			   OCPP_OK)
 			{
 				Ocpp_LogError(("[OCPP] Parse call error message with uniqueId#%s failed\r\n",
 							   message->uniqueId));
@@ -152,12 +234,66 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 		default:
 			break;
 	}
-	return OcppJson_ParseMessage(data, dataSize, message);
+	return OCPP_OK;
 }
 static OcppRetType Ocpp_BuildMessage(OcppHandle* ocppHandle, OcppMessage* message, uint8_t* data,
 									 uint32_t* dataSize)
 {
-	return OcppJson_BuildMessage(data, dataSize, message);
+	OcppRetType ret;
+	/**
+	 * Addition Part is one of below:
+	 * 1.Call: Payload
+	 * 2.Call Result: Payload
+	 * 3.Call Error: Error Code + Error Description + Error Details
+	 */
+	char actionStr[OCPP_ACTION_ID_MAX_LENGTH];
+	uint32_t actionStrLen = OCPP_ACTION_ID_MAX_LENGTH;
+	char additionPartStr[OCPP_MESSAGE_ADDITION_PART_MAX_LENGTH];
+	uint32_t additionPartStrLen = OCPP_MESSAGE_ADDITION_PART_MAX_LENGTH; // Max allowed
+
+	switch(message->messageTypeId)
+	{
+		case OCPP_MESSAGE_TYPE_CALL:
+			ret = OcppJson_BuildActionId(message->call.action, actionStr, &actionStrLen);
+			if(ret != OCPP_OK)
+			{
+				Ocpp_LogError(("[OCPP] uniqueId#%s Build action id failed with actionId %d\r\n",
+							   message->uniqueId, message->call.action));
+				return ret;
+			}
+			ret = OcppJson_BuildCallMessage(&message->call, additionPartStr, &additionPartStrLen);
+			*dataSize = sprintf(data, "[%d,\"%s\",\"%s\",%s]", message->messageTypeId,
+								message->uniqueId, actionStr, additionPartStr);
+			break;
+		case OCPP_MESSAGE_TYPE_CALL_RESULT:
+			ret = OcppJson_BuildCallResultMessage(&message->callResult, additionPartStr,
+												  &additionPartStrLen);
+			*dataSize = sprintf(data, "[%d,\"%s\",%s]", message->messageTypeId, message->uniqueId,
+								additionPartStr);
+			break;
+		case OCPP_MESSAGE_TYPE_CALL_ERROR:
+			ret = OcppJson_BuildCallErrorMessage(&message->callError, additionPartStr,
+												 &additionPartStrLen);
+			*dataSize = sprintf(data, "[%d,\"%s\",%s]", message->messageTypeId, message->uniqueId,
+								additionPartStr);
+			break;
+		default:
+			break;
+	}
+	if(ret != OCPP_OK)
+	{
+		Ocpp_LogError(
+			("[OCPP] uniqueId#%s Parse addition part failed %d\r\n", message->uniqueId, ret));
+		return ret;
+	}
+
+	if(*dataSize < 0)
+	{
+		Ocpp_LogError(
+			("[OCPP] uniqueId#%s Build message failed %d\r\n", message->uniqueId, *dataSize));
+		return OCPP_NOT_OK;
+	}
+	return OCPP_OK;
 }
 
 static OcppRetType Ocpp_GetActionIdByUniqueId(OcppHandle* ocppHandle, OcppUuid uniqueId,
@@ -183,4 +319,21 @@ static OcppRetType Ocpp_SetActionIdByUniqueId(OcppHandle* ocppHandle, OcppUuid u
 	strcpy(ocppHandle->requestPool[ocppHandle->requestIdx++].uniqueId, uniqueId);
 
 	return OCPP_OK;
+}
+
+static OcppRetType Ocpp_GetOcppHandleBySocketId(int socketId, OcppHandle** ocppHandle)
+{
+	OcppRetType ret = OCPP_NOT_OK;
+	for(size_t i = 0; i < OCPP_CLIENT_NO_SUPPORT; i++)
+	{
+		if((Ocpp_handleRefTable[i] != NULL) && (Ocpp_handleRefTable[i]->webSocketIntf != NULL) &&
+		   (Ocpp_handleRefTable[i]->webSocketIntf->socketId == socketId))
+		{
+			*ocppHandle = Ocpp_handleRefTable[i];
+			ret = OCPP_OK;
+			break;
+		}
+	}
+
+	return ret;
 }
