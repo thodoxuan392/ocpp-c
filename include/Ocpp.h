@@ -16,6 +16,7 @@
 #include <OcppConfig.h>
 #include <OcppWebsocketIntf.h>
 #include <OcppMessage.h>
+#include <OcppJson.h>
 
 typedef OcppRetType (*OcppMessageListener)(OcppMessage* message);
 

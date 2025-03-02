@@ -158,7 +158,7 @@ OcppRetType OcppStopTransaction_ParseResponse(char* json, jsmntok_t* token, uint
 		{
 			tokenLen = *tokenSize - i - 1;
 			OcppJson_ParseIdTagInfo(json, &token[i + 1], &tokenLen,
-									ocppPayload->stopTransactionReq.idTag);
+									&ocppPayload->stopTransactionRes.idTagInfo);
 			i += tokenLen + 1;
 		}
 	}

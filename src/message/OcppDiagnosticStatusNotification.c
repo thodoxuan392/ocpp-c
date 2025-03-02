@@ -13,8 +13,8 @@ OcppRetType OcppDiagnosticStatusNotification_BuildRequest(void* payload, char* s
 	char statusStrLength[OCPP_MESSAGE_STATUS_MAX_LENGTH];
 	memset(statusStrLength, 0, sizeof(statusStrLength));
 
-	(void)OcppJson_BuildMessageStatus(ocppPayload->diagnosticStatusNotificationReq.status,
-									  statusStrLength, &buildStrLength);
+	(void)OcppJson_BuildDiagnosticsStatus(ocppPayload->diagnosticStatusNotificationReq.status,
+										  statusStrLength, &buildStrLength);
 
 	ret = sprintf(string, "{\"status\": \"%s\"}", statusStrLength);
 	if(ret < 0)
@@ -40,9 +40,9 @@ OcppRetType OcppDiagnosticStatusNotification_ParseRequest(char* json, jsmntok_t*
 	{
 		if(OcppJson_Equal(json, &token[i], "status") == 0)
 		{
-			OcppJson_ParseMessageStatus(json + token[i + 1].start,
-										token[i + 1].end - token[i + 1].start,
-										&ocppPayload->diagnosticStatusNotificationReq.status);
+			OcppJson_ParseDiagnosticsStatus(json + token[i + 1].start,
+											token[i + 1].end - token[i + 1].start,
+											&ocppPayload->diagnosticStatusNotificationReq.status);
 			i++;
 		}
 	}

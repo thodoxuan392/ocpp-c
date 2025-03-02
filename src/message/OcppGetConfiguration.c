@@ -156,7 +156,7 @@ OcppRetType OcppGetConfiguration_ParseResponse(char* json, jsmntok_t* token, uin
 			for(size_t keyIdx = 0; keyIdx < ocppPayload->getConfigurationRes.noUnknownKey; keyIdx++)
 			{
 				OcppJson_ToString(json, &token[keyTokenIdx],
-								  &ocppPayload->getConfigurationRes.unknownKey[keyIdx]);
+								  ocppPayload->getConfigurationRes.unknownKey[keyIdx]);
 				keyTokenIdx += 1;
 			}
 			i = keyTokenIdx - 1;

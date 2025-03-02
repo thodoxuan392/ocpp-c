@@ -55,9 +55,9 @@ OcppRetType OcppMeterValue_ParseRequest(char* json, jsmntok_t* token, uint32_t* 
 	uint32_t tokenRemain;
 	OcppPayload* ocppPayload = (OcppPayload*)payload;
 
-	if(tokenSize < 2)
+	if(*tokenSize < 2)
 	{
-		Ocpp_LogError(("[OCPP] Invalid token size expect > 2, got %d\r\n", tokenSize));
+		Ocpp_LogError(("[OCPP] Invalid token size expect > 2, got %d\r\n", *tokenSize));
 		return OCPP_NOT_OK;
 	}
 	for(i = 0; (i < *tokenSize) && (token[i].end <= token[0].end); i++)

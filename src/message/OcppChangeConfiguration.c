@@ -34,12 +34,12 @@ OcppRetType OcppChangeConfiguration_ParseRequest(char* json, jsmntok_t* token, u
 	{
 		if(OcppJson_Equal(json, &token[i], "key") == 0)
 		{
-			OcppJson_ToString(json, &token[i + 1], &ocppPayload->changeConfigurationReq.key);
+			OcppJson_ToString(json, &token[i + 1], ocppPayload->changeConfigurationReq.key);
 			i++;
 		}
 		else if(OcppJson_Equal(json, &token[i], "value") == 0)
 		{
-			OcppJson_ToString(json, &token[i + 1], &ocppPayload->changeConfigurationReq.value);
+			OcppJson_ToString(json, &token[i + 1], ocppPayload->changeConfigurationReq.value);
 			i++;
 		}
 	}

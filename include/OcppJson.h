@@ -5,6 +5,24 @@
 #include <OcppTypes.h>
 #include <OcppMessage.h>
 
+typedef enum
+{
+	OCPP_PAYLOAD_TYPE_REQ,
+	OCPP_PAYLOAD_TYPE_RES,
+
+	OCPP_PAYLOAD_TYPE_MAX
+} OcppJson_PayloadType;
+typedef OcppRetType (*OcppJson_BuildPayloadFnc)(void* payload, char* string,
+												uint32_t* stringLength);
+typedef OcppRetType (*OcppJson_ParsePayloadFnc)(char* json, jsmntok_t* token, uint32_t* tokenLen,
+												void* payload);
+
+typedef struct
+{
+	OcppJson_BuildPayloadFnc buildFnc;
+	OcppJson_ParsePayloadFnc parseFnc;
+} OcppJson_PayloadOperation;
+
 OcppRetType OcppJson_ParseCallMessage(char* string, jsmntok_t* token, uint32_t* tokenLen,
 									  OcppCallMessage* message);
 OcppRetType OcppJson_BuildCallMessage(OcppCallMessage* message, char* string,

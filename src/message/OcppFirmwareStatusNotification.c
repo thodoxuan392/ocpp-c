@@ -13,8 +13,8 @@ OcppRetType OcppFirmwareStatusNotification_BuildRequest(void* payload, char* str
 	char statusStrLength[OCPP_MESSAGE_STATUS_MAX_LENGTH];
 	memset(statusStrLength, 0, sizeof(statusStrLength));
 
-	(void)OcppJson_BuildMessageStatus(ocppPayload->firmwareStatusNotificationReq.status,
-									  statusStrLength, &buildStrLength);
+	(void)OcppJson_BuildFirmwareStatus(ocppPayload->firmwareStatusNotificationReq.status,
+									   statusStrLength, &buildStrLength);
 
 	ret = sprintf(string, "{\"status\": \"%s\"}", statusStrLength);
 	if(ret < 0)
@@ -40,9 +40,9 @@ OcppRetType OcppFirmwareStatusNotification_ParseRequest(char* json, jsmntok_t* t
 	{
 		if(OcppJson_Equal(json, &token[i], "status") == 0)
 		{
-			OcppJson_ParseMessageStatus(json + token[i + 1].start,
-										token[i + 1].end - token[i + 1].start,
-										&ocppPayload->firmwareStatusNotificationReq.status);
+			OcppJson_ParseFirmwareStatus(json + token[i + 1].start,
+										 token[i + 1].end - token[i + 1].start,
+										 &ocppPayload->firmwareStatusNotificationReq.status);
 			i++;
 		}
 	}
