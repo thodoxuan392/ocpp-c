@@ -40,6 +40,7 @@ typedef struct
 OcppRetType Ocpp_Init(OcppHandle* ocppHandle);
 OcppRetType Ocpp_DeInit(OcppHandle* ocppHandle);
 OcppRetType Ocpp_Loop(OcppHandle* ocppHandle);
+OcppRetType Ocpp_IsConnected(OcppHandle* ocppHandle);
 OcppRetType Ocpp_RegisterMessageListener(OcppHandle* ocppHandle,
 										 OcppMessageListener messageListener);
 

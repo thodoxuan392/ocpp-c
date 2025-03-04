@@ -48,6 +48,10 @@ OcppRetType Ocpp_Loop(OcppHandle* ocppHandle)
 		}
 	}
 }
+OcppRetType Ocpp_IsConnected(OcppHandle* ocppHandle)
+{
+	return (ocppHandle->connected) ? OCPP_OK : OCPP_NOT_OK;
+}
 OcppRetType Ocpp_RegisterMessageListener(OcppHandle* ocppHandle,
 										 OcppMessageListener messageListener)
 {
