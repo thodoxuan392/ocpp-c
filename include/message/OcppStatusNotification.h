@@ -9,7 +9,7 @@ typedef struct
 	int connectorId;
 	OcppChargePointErrorCode errorCode;
 	OcppCiString50Type info;
-	OcppMessageStatus status;
+	OcppChargePointStatus status;
 	OcppDateTime timestamp;
 	OcppCiString255Type vendorId;
 	OcppCiString50Type vendorErrorCode;

@@ -21,8 +21,8 @@ OcppRetType OcppStatusNotification_BuildRequest(void* payload, char* string, uin
 									   &buildStrLength);
 	OcppJson_BuildDateTime(&ocppPayload->statusNotificationReq.timestamp, timestampStr,
 						   &buildStrLength);
-	OcppJson_BuildMessageStatus(ocppPayload->statusNotificationReq.status, statusStr,
-								&buildStrLength);
+	OcppJson_BuildChargePointStatus(ocppPayload->statusNotificationReq.status, statusStr,
+									&buildStrLength);
 
 	ret = sprintf(string,
 				  "{\"connectorId\": %d,\"errorCode\": \"%s\",\"info\": \"%s\",\"status\": "
@@ -74,9 +74,9 @@ OcppRetType OcppStatusNotification_ParseRequest(char* json, jsmntok_t* token, ui
 		}
 		else if(OcppJson_Equal(json, &token[i], "status") == 0)
 		{
-			OcppJson_ParseMessageStatus(json + token[i + 1].start,
-										token[i + 1].end - token[i + 1].start,
-										&ocppPayload->statusNotificationReq.status);
+			OcppJson_ParseChargePointStatus(json + token[i + 1].start,
+											token[i + 1].end - token[i + 1].start,
+											&ocppPayload->statusNotificationReq.status);
 			i++;
 		}
 		else if(OcppJson_Equal(json, &token[i], "timestamp") == 0)

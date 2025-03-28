@@ -219,6 +219,19 @@ const char* OcppJson_RecurrencyKindMapping[OCPP_RECURRENCY_KIND_MAX] = {
 	[OCPP_RECURRENCY_KIND_WEEKLY] = "Weekly",
 };
 
+const char* OcppJson_ChargePointStatusMapping[OCPP_CP_STATUS_MAX] = {
+	[OCPP_CP_STATUS_AVAILABLE] = "Available",
+	[OCPP_CP_STATUS_PREPARING] = "Preparing",
+	[OCPP_CP_STATUS_CHARGING] = "Charging",
+	[OCPP_CP_STATUS_SUSPENDED_EV] = "SuspendedEV",
+	[OCPP_CP_STATUS_SUSPENDED_EVSE] = "SuspendedEVSE",
+	[OCPP_CP_STATUS_FINISHING] = "Finishing",
+	[OCPP_CP_STATUS_RESERVED] = "Reserved",
+	[OCPP_CP_STATUS_UNAVAILABLE] = "Unavailable",
+	[OCPP_CP_STATUS_FAULTED] = "Faulted",
+	[OCPP_CP_STATUS_EMERGENCY] = "Emergency",
+};
+
 const char* OcppJson_ChargePointErrorCodeMapping[OCPP_CP_ERR_MAX] = {
 	[OCPP_CP_ERR_CONN_LOCK_FAIL] = "ConnectorLockFailure",
 	[OCPP_CP_ERR_EV_COMM] = "EVCommunicationError",
@@ -496,6 +509,22 @@ OcppRetType OcppJson_BuildRecurrencyKind(OcppRecurrencyKind type, char* string,
 {
 	return OcppJson_GetGenericDataInTable(type, OcppJson_RecurrencyKindMapping,
 										  OCPP_RECURRENCY_KIND_MAX, string, stringLength);
+}
+OcppRetType OcppJson_ParseChargePointStatus(char* string, uint32_t stringLength,
+											OcppChargePointStatus* type)
+{
+	if(OcppJson_FindGenericDataInTable(string, stringLength, OcppJson_ChargePointStatusMapping,
+									   OCPP_CP_STATUS_MAX, (uint32_t*)type) == OCPP_NOT_FOUND)
+	{
+		return OCPP_INVALID;
+	}
+	return OCPP_OK;
+}
+OcppRetType OcppJson_BuildChargePointStatus(OcppChargePointStatus type, char* string,
+											uint32_t* stringLength)
+{
+	return OcppJson_GetGenericDataInTable(type, OcppJson_ChargePointStatusMapping,
+										  OCPP_CP_STATUS_MAX, string, stringLength);
 }
 OcppRetType OcppJson_ParseChargePointErrorCode(char* string, uint32_t stringLength,
 											   OcppChargePointErrorCode* type)

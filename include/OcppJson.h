@@ -62,6 +62,10 @@ OcppRetType OcppJson_ParseRecurrencyKind(char* string, uint32_t stringLength,
 										 OcppRecurrencyKind* type);
 OcppRetType OcppJson_BuildRecurrencyKind(OcppRecurrencyKind type, char* string,
 										 uint32_t* stringLength);
+OcppRetType OcppJson_ParseChargePointStatus(char* string, uint32_t stringLength,
+											OcppChargePointStatus* type);
+OcppRetType OcppJson_BuildChargePointStatus(OcppChargePointStatus type, char* string,
+											uint32_t* stringLength);
 OcppRetType OcppJson_ParseChargePointErrorCode(char* string, uint32_t stringLength,
 											   OcppChargePointErrorCode* type);
 OcppRetType OcppJson_BuildChargePointErrorCode(OcppChargePointErrorCode type, char* string,
