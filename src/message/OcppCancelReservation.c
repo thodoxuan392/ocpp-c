@@ -25,8 +25,6 @@ OcppRetType OcppCancelReservation_ParseRequest(char* json, jsmntok_t* token, uin
 	size_t i;
 	OcppPayload* ocppPayload = (OcppPayload*)payload;
 
-	Ocpp_LogInfo(("OcppCancelReservation_ParseRequest 1\r\n"));
-
 	if(*tokenSize < 1)
 	{
 		Ocpp_LogError(("[OCPP] Invalid token size, at least 1, got %d", *tokenSize));
@@ -41,7 +39,6 @@ OcppRetType OcppCancelReservation_ParseRequest(char* json, jsmntok_t* token, uin
 			i++;
 		}
 	}
-	Ocpp_LogInfo(("OcppCancelReservation_ParseRequest 2\r\n"));
 
 	*tokenSize = i;
 	return OCPP_OK;

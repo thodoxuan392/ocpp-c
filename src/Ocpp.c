@@ -150,11 +150,15 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 	jsmntok_t tokens[OCPP_MESSAGE_MAX_TOKEN];
 	uint32_t tokenSize;
 
+	if(dataSize == 0)
+	{
+		return OCPP_NOT_OK;
+	}
+
 	jsmn_init(&parser);
 	int noToken = jsmn_parse(&parser, data, dataSize, tokens, OCPP_MESSAGE_MAX_TOKEN);
-	if(noToken < 0)
+	if(noToken <= 0)
 	{
-		Ocpp_LogError(("[OCPP] Error parsing message %s, err#%d\r\n", data, noToken));
 		return OCPP_NOT_OK;
 	}
 	if((noToken < 1) || ((tokens[0].type != JSMN_ARRAY)))
@@ -170,16 +174,12 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 
 	OcppJson_ToNumber(data, &tokens[1], &message->messageTypeId);
 
-	printf("Ocpp_ParseMessage messageTypeId %d \r\n", message->messageTypeId);
-
 	switch(message->messageTypeId)
 	{
 		case OCPP_MESSAGE_TYPE_CALL:
 			OcppJson_ToString(data, &tokens[2], message->uniqueId);
-			printf("Ocpp_ParseMessage uniqueId %s \r\n", message->uniqueId);
 
 			OcppJson_ToString(data, &tokens[3], actionIdStr);
-			printf("Ocpp_ParseMessage actionId %s \r\n", actionIdStr);
 
 			OcppJson_ParseActionId(actionIdStr, strlen(actionIdStr), &message->call.action);
 
@@ -319,8 +319,10 @@ static OcppRetType Ocpp_GetActionIdByUniqueId(OcppHandle* ocppHandle, OcppUuid u
 static OcppRetType Ocpp_SetActionIdByUniqueId(OcppHandle* ocppHandle, OcppUuid uniqueId,
 											  OcppActionId actionId)
 {
-	ocppHandle->requestPool[ocppHandle->requestIdx++].actionId = actionId;
-	strcpy(ocppHandle->requestPool[ocppHandle->requestIdx++].uniqueId, uniqueId);
+	ocppHandle->requestPool[ocppHandle->requestIdx].actionId = actionId;
+	strcpy(ocppHandle->requestPool[ocppHandle->requestIdx].uniqueId, uniqueId);
+
+	ocppHandle->requestIdx = (ocppHandle->requestIdx + 1) % OCPP_REQUEST_POOL_MAX;
 
 	return OCPP_OK;
 }

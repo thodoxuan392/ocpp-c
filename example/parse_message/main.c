@@ -699,10 +699,10 @@ int main(int argc, char* argv[])
 	// 								authorizeResMessageStr, strlen(authorizeResMessageStr));
 	// Ocpp_Loop(&ocppHandle);
 
-	// OcppWebSocket_EventCallbackFunc(SOCKET_ID, OCPP_WEB_SOCKET_EVENT_RX_DATA,
-	// 								bootNotificationReqMessageStr,
-	// 								strlen(bootNotificationReqMessageStr));
-	// Ocpp_Loop(&ocppHandle);
+	OcppWebSocket_EventCallbackFunc(SOCKET_ID, OCPP_WEB_SOCKET_EVENT_RX_DATA,
+									bootNotificationReqMessageStr,
+									strlen(bootNotificationReqMessageStr));
+	Ocpp_Loop(&ocppHandle);
 
 	// OcppWebSocket_EventCallbackFunc(SOCKET_ID, OCPP_WEB_SOCKET_EVENT_RX_DATA,
 	// 								bootNotificationResMessageStr,
@@ -953,15 +953,13 @@ int main(int argc, char* argv[])
 	// unlockConnectorResStr, 								strlen(unlockConnectorResStr));
 	// ocppHandle.requestPool[0].actionId = OCPP_ACTION_UNLOCK_CONNECTOR; Ocpp_Loop(&ocppHandle);
 
-	OcppWebSocket_EventCallbackFunc(SOCKET_ID, OCPP_WEB_SOCKET_EVENT_RX_DATA, updateFirmwareReqStr,
-									strlen(updateFirmwareReqStr));
-	ocppHandle.requestPool[0].actionId = OCPP_ACTION_UPDATE_FIRMWARE;
-	Ocpp_Loop(&ocppHandle);
+	// OcppWebSocket_EventCallbackFunc(SOCKET_ID, OCPP_WEB_SOCKET_EVENT_RX_DATA,
+	// updateFirmwareReqStr, 								strlen(updateFirmwareReqStr)); ocppHandle.requestPool[0].actionId =
+	// OCPP_ACTION_UPDATE_FIRMWARE; Ocpp_Loop(&ocppHandle);
 
-	OcppWebSocket_EventCallbackFunc(SOCKET_ID, OCPP_WEB_SOCKET_EVENT_RX_DATA, updateFirmwareResStr,
-									strlen(updateFirmwareResStr));
-	ocppHandle.requestPool[0].actionId = OCPP_ACTION_UPDATE_FIRMWARE;
-	Ocpp_Loop(&ocppHandle);
+	// OcppWebSocket_EventCallbackFunc(SOCKET_ID, OCPP_WEB_SOCKET_EVENT_RX_DATA,
+	// updateFirmwareResStr, 								strlen(updateFirmwareResStr)); ocppHandle.requestPool[0].actionId =
+	// OCPP_ACTION_UPDATE_FIRMWARE; Ocpp_Loop(&ocppHandle);
 }
 
 static OcppRetType OcppWebSocketIntf_SendData(int socketId, uint8_t* data, uint32_t dataSize)

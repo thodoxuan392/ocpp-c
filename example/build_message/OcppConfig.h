@@ -25,7 +25,7 @@
 #define OCPP_VERSION_16
 #define OCPP_VERSION_201
 #define OCPP_VERSION OCPP_VERSION_16
-#define OCPP_REQUEST_POOL_MAX 5 // 5 request can be stored at one time
+#define OCPP_REQUEST_POOL_MAX 20 // 5 request can be stored at one time
 
 /**
  * @brief  Buffer Length definition
