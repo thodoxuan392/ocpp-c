@@ -147,9 +147,9 @@ OcppRetType OcppStopTransaction_ParseResponse(char* json, jsmntok_t* token, uint
 	uint32_t tranDataTokenIdx;
 	uint32_t tokenLen;
 
-	if(*tokenSize < 2)
+	if(*tokenSize < 0)
 	{
-		Ocpp_LogError(("[OCPP] Invalid token size, at least 2, got %d", *tokenSize));
+		Ocpp_LogError(("[OCPP] Invalid token size, at least 0, got %d", *tokenSize));
 		return OCPP_NOT_OK;
 	}
 	for(i = 0; (i < *tokenSize) && (token[i].end <= token[0].end); i++)

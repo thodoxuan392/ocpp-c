@@ -291,7 +291,7 @@ static OcppRetType Ocpp_BuildMessage(OcppHandle* ocppHandle, OcppMessage* messag
 	if(ret != OCPP_OK)
 	{
 		Ocpp_LogError(
-			("[OCPP] uniqueId#%s Parse addition part failed %d\r\n", message->uniqueId, ret));
+			("[OCPP] uniqueId#%s Build addition part failed %d\r\n", message->uniqueId, ret));
 		return ret;
 	}
 
