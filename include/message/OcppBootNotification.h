@@ -11,7 +11,7 @@ typedef struct
 	OcppCiString25Type chargePointSerialNumber;
 	OcppCiString20Type chargeBoxSerialNumber;
 	OcppCiString50Type firmwareVersion;
-	OcppCiString20Type iccid;
+	OcppCiString50Type iccid;
 	OcppCiString20Type imsi;
 	OcppCiString25Type meterType;
 	OcppCiString25Type meterSerialNumber;

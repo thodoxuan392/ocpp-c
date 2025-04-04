@@ -140,6 +140,10 @@ static OcppRetType Ocpp_WebSocketEventCallback(int socketId, OcppWebSocketEvent 
 static OcppRetType Ocpp_WebSocketSendData(OcppHandle* ocppHandle, uint8_t* data, uint32_t dataSize)
 {
 	int socketId = ocppHandle->webSocketIntf->socketId;
+	if(!ocppHandle->connected)
+	{
+		return OCPP_NOT_OK;
+	}
 	return ocppHandle->webSocketIntf->sendDataPf(socketId, data, dataSize);
 }
 
