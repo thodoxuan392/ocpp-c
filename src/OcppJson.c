@@ -816,6 +816,19 @@ OcppRetType OcppJson_BuildCallResultMessage(OcppCallResultMessage* message, char
 OcppRetType OcppJson_ParseCallErrorMessage(char* string, jsmntok_t* token, uint32_t* tokenLen,
 										   OcppCallErrorMessage* message)
 {
+	if(*tokenLen < 3)
+	{
+		Ocpp_LogError(("[OCPP] Invalid token size, expected 3, got %d", *tokenLen));
+		return OCPP_NOT_OK;
+	}
+
+	OcppJson_ParseErrorCode(string + token[0].start, token[0].end - token[0].start,
+							&message->errorCode);
+	strncpy(&message->errorDescription, string + token[1].start, token[1].end - token[1].start);
+
+	// Detail shall be supported later
+	*tokenLen = 2;
+	return OCPP_OK;
 }
 OcppRetType OcppJson_BuildCallErrorMessage(OcppCallErrorMessage* message, char* string,
 										   uint32_t* stringLength)
