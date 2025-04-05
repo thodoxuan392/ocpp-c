@@ -58,6 +58,12 @@ OcppRetType Ocpp_RegisterMessageListener(OcppHandle* ocppHandle,
 	ocppHandle->messageListener = messageListener;
 }
 
+OcppRetType Ocpp_InitMessage(OcppMessage* message)
+{
+	memset(message, 0, sizeof(OcppMessage));
+	return OCPP_OK;
+}
+
 OcppRetType Ocpp_SendMessage(OcppHandle* ocppHandle, OcppMessage* message)
 {
 	OcppRetType retType;

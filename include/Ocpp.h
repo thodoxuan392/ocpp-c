@@ -43,7 +43,7 @@ OcppRetType Ocpp_Loop(OcppHandle* ocppHandle);
 OcppRetType Ocpp_IsConnected(OcppHandle* ocppHandle);
 OcppRetType Ocpp_RegisterMessageListener(OcppHandle* ocppHandle,
 										 OcppMessageListener messageListener);
-
+OcppRetType Ocpp_InitMessage(OcppMessage* message);
 OcppRetType Ocpp_SendMessage(OcppHandle* ocppHandle, OcppMessage* message);
 
 #endif // __OCPP_H
