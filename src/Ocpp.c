@@ -21,6 +21,7 @@ static OcppRetType Ocpp_GetActionIdByUniqueId(OcppHandle* ocppHandle, OcppUuid u
 static OcppRetType Ocpp_SetActionIdByUniqueId(OcppHandle* ocppHandle, OcppUuid uniqueId,
 											  OcppActionId actionId);
 static OcppRetType Ocpp_GetOcppHandleBySocketId(int socketId, OcppHandle** ocppHandle);
+static OcppRetType Ocpp_ClearRxBuffer(OcppHandle* ocppHandle);
 
 static OcppHandle* Ocpp_handleRefTable[OCPP_CLIENT_NO_SUPPORT];
 static bool Ocpp_isConnected[OCPP_CLIENT_NO_SUPPORT];
@@ -174,6 +175,7 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 	if((noToken < 1) || ((tokens[0].type != JSMN_ARRAY)))
 	{
 		Ocpp_LogError(("[OCPP] Message should be JSMN_ARRRAY and length > 1\r\n"));
+		Ocpp_ClearRxBuffer(ocppHandle);
 		return OCPP_NOT_OK;
 	}
 
@@ -198,6 +200,7 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 			{
 				Ocpp_LogError(
 					("[OCPP] Parse call message with uniqueId#%s failed\r\n", message->uniqueId));
+				Ocpp_ClearRxBuffer(ocppHandle);
 				return OCPP_NOT_OK;
 			}
 
@@ -207,6 +210,7 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 			{
 				Ocpp_LogError(("[OCPP] Cannot save action %d by uniqueId#%s\r\n",
 							   message->call.action, message->uniqueId));
+				Ocpp_ClearRxBuffer(ocppHandle);
 				return OCPP_NOT_OK;
 			}
 			break;
@@ -219,7 +223,9 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 										  &message->callResult.action) != OCPP_OK)
 			{
 				Ocpp_LogError(
-					("[OCPP] UniqueId#%s of Call Result not found in pool\r\n", message->uniqueId));
+					("[OCPP] UniqueId#%s of Call Result not found in pool, clear rx buffer ...\r\n",
+					 message->uniqueId));
+				Ocpp_ClearRxBuffer(ocppHandle);
 				return OCPP_NOT_OK;
 			}
 			printf("Ocpp_ParseMessage actionId %d \r\n", message->callResult.action);
@@ -230,6 +236,7 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 			{
 				Ocpp_LogError(("[OCPP] Parse call result message with uniqueId#%s failed\r\n",
 							   message->uniqueId));
+				Ocpp_ClearRxBuffer(ocppHandle);
 				return OCPP_NOT_OK;
 			}
 			break;
@@ -242,6 +249,7 @@ static OcppRetType Ocpp_ParseMessage(OcppHandle* ocppHandle, uint8_t* data, uint
 			{
 				Ocpp_LogError(("[OCPP] Parse call error message with uniqueId#%s failed\r\n",
 							   message->uniqueId));
+				Ocpp_ClearRxBuffer(ocppHandle);
 				return OCPP_NOT_OK;
 			}
 			break;
@@ -352,4 +360,11 @@ static OcppRetType Ocpp_GetOcppHandleBySocketId(int socketId, OcppHandle** ocppH
 	}
 
 	return ret;
+}
+
+static OcppRetType Ocpp_ClearRxBuffer(OcppHandle* ocppHandle)
+{
+	ocppHandle->rxBufferLength = 0;
+	memset(ocppHandle->rxBuffer, 0, OCPP_RX_BUFFER_MAX_LENGTH);
+	return OCPP_OK;
 }
